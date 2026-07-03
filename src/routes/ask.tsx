@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Sparkles, Loader2 } from "lucide-react";
 import { GarageNav } from "../components/GarageNav";
 
-type Search = { maker?: string; model?: string; year?: string };
+type Search = { maker?: string; model?: string; year?: string; q?: string };
 
 export const Route = createFileRoute("/ask")({
   head: () => ({ meta: [{ title: "質問する — Project Garage" }] }),
@@ -11,6 +11,7 @@ export const Route = createFileRoute("/ask")({
     maker: typeof s.maker === "string" ? s.maker : undefined,
     model: typeof s.model === "string" ? s.model : undefined,
     year: typeof s.year === "string" ? s.year : undefined,
+    q: typeof s.q === "string" ? s.q : undefined,
   }),
   component: AskPage,
 });
@@ -25,7 +26,7 @@ const SUGGESTIONS = [
 function AskPage() {
   const navigate = useNavigate();
   const search = Route.useSearch();
-  const [question, setQuestion] = useState("");
+  const [question, setQuestion] = useState(search.q ?? "");
   const [loading, setLoading] = useState(false);
 
   const submit = () => {
