@@ -2,28 +2,12 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { ArrowRight, Car } from "lucide-react";
 import { GarageNav } from "../components/GarageNav";
+import { MAKERS, MODELS, YEARS } from "@/lib/car-data";
 
 export const Route = createFileRoute("/select")({
   head: () => ({ meta: [{ title: "車を選ぶ — Project Garage" }] }),
   component: SelectCar,
 });
-
-const MAKERS = ["Toyota", "Honda", "Nissan", "Mazda", "Subaru", "Suzuki", "Mitsubishi", "Lexus", "BMW", "Mercedes-Benz", "Audi", "Volkswagen"];
-const MODELS: Record<string, string[]> = {
-  Toyota: ["86", "Supra", "GR Yaris", "Corolla", "Prius", "Land Cruiser"],
-  Honda: ["Civic Type R", "S2000", "NSX", "Fit", "Vezel"],
-  Nissan: ["GT-R", "Skyline", "Silvia", "Fairlady Z", "Note"],
-  Mazda: ["RX-7", "Roadster (MX-5)", "CX-5", "Mazda3"],
-  Subaru: ["WRX STI", "BRZ", "Forester", "Levorg"],
-  Suzuki: ["Swift Sport", "Jimny", "Alto Works"],
-  Mitsubishi: ["Lancer Evolution", "Eclipse Cross"],
-  Lexus: ["LFA", "RC F", "IS", "LC"],
-  BMW: ["M3", "M4", "M2", "3 Series"],
-  "Mercedes-Benz": ["C-Class", "AMG GT", "E-Class"],
-  Audi: ["RS4", "RS6", "R8", "A4"],
-  Volkswagen: ["Golf GTI", "Golf R", "Polo"],
-};
-const YEARS = Array.from({ length: 26 }, (_, i) => 2025 - i);
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
