@@ -9,8 +9,26 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SelectRouteImport } from './routes/select'
+import { Route as AskRouteImport } from './routes/ask'
+import { Route as AnswerRouteImport } from './routes/answer'
 import { Route as IndexRouteImport } from './routes/index'
 
+const SelectRoute = SelectRouteImport.update({
+  id: '/select',
+  path: '/select',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AskRoute = AskRouteImport.update({
+  id: '/ask',
+  path: '/ask',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AnswerRoute = AnswerRouteImport.update({
+  id: '/answer',
+  path: '/answer',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -19,28 +37,61 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/answer': typeof AnswerRoute
+  '/ask': typeof AskRoute
+  '/select': typeof SelectRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/answer': typeof AnswerRoute
+  '/ask': typeof AskRoute
+  '/select': typeof SelectRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/answer': typeof AnswerRoute
+  '/ask': typeof AskRoute
+  '/select': typeof SelectRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths: '/' | '/answer' | '/ask' | '/select'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/' | '/answer' | '/ask' | '/select'
+  id: '__root__' | '/' | '/answer' | '/ask' | '/select'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AnswerRoute: typeof AnswerRoute
+  AskRoute: typeof AskRoute
+  SelectRoute: typeof SelectRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/select': {
+      id: '/select'
+      path: '/select'
+      fullPath: '/select'
+      preLoaderRoute: typeof SelectRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ask': {
+      id: '/ask'
+      path: '/ask'
+      fullPath: '/ask'
+      preLoaderRoute: typeof AskRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/answer': {
+      id: '/answer'
+      path: '/answer'
+      fullPath: '/answer'
+      preLoaderRoute: typeof AnswerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -53,17 +104,10 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AnswerRoute: AnswerRoute,
+  AskRoute: AskRoute,
+  SelectRoute: SelectRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
