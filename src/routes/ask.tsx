@@ -26,7 +26,7 @@ const SUGGESTIONS = [
 function AskPage() {
   const navigate = useNavigate();
   const search = Route.useSearch();
-  const [question, setQuestion] = useState("");
+  const [question, setQuestion] = useState(search.q ?? "");
   const [loading, setLoading] = useState(false);
 
   const submit = () => {
