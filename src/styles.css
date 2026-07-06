@@ -30,6 +30,8 @@
   --color-ring: var(--ring);
   --color-accent-blue: var(--accent-blue);
   --color-accent-blue-glow: var(--accent-blue-glow);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
   --font-display: "Inter", "Noto Sans JP", sans-serif;
 }
 
@@ -57,13 +59,16 @@
   --ring: oklch(0.65 0.22 254);
   --accent-blue: oklch(0.65 0.22 254);
   --accent-blue-glow: oklch(0.75 0.18 254);
+  --warning: oklch(0.75 0.15 85);
+  --warning-foreground: oklch(0.2 0.01 60);
 }
 
 @layer base {
   * {
     border-color: var(--color-border);
   }
-  html, body {
+  html,
+  body {
     background-color: var(--color-background);
     color: var(--color-foreground);
     font-family: var(--font-display);
@@ -80,4 +85,26 @@
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
+}
+
+@utility animate-fade-in {
+  animation: fadeIn 0.5s ease-out both;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@utility hover-scale {
+  transition: transform 150ms ease;
+  &:hover {
+    transform: scale(1.02);
+  }
 }
