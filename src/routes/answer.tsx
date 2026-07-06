@@ -88,11 +88,7 @@ const REFS = {
   ],
 };
 
-const SHOPS = [
-  { name: "Amazon" },
-  { name: "楽天市場" },
-  { name: "Yahoo!ショッピング" },
-];
+const SHOPS = [{ name: "Amazon" }, { name: "楽天市場" }, { name: "Yahoo!ショッピング" }];
 
 function AnswerPage() {
   const { q, maker, model, year } = Route.useSearch();
@@ -163,7 +159,9 @@ function AnswerPage() {
               <div className="mt-2 flex items-center gap-2">
                 <Rating value={PICK.rating} />
                 <span className="text-sm font-semibold text-foreground/90">{PICK.rating}</span>
-                <span className="text-xs text-muted-foreground">（{PICK.reviews}件のレビュー）</span>
+                <span className="text-xs text-muted-foreground">
+                  （{PICK.reviews}件のレビュー）
+                </span>
               </div>
               <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
                 <span className="text-foreground/80">おすすめの人: </span>
@@ -190,7 +188,10 @@ function AnswerPage() {
         </SectionCard>
 
         {/* 3. 注意点 */}
-        <section className="animate-fade-in mb-6 overflow-hidden rounded-2xl border border-warning/20 bg-warning/5 backdrop-blur" style={{ animationDelay: "210ms" }}>
+        <section
+          className="animate-fade-in mb-6 overflow-hidden rounded-2xl border border-warning/20 bg-warning/5 backdrop-blur"
+          style={{ animationDelay: "210ms" }}
+        >
           <header className="flex items-center gap-3 border-b border-warning/20 px-6 py-4">
             <span className="grid h-7 w-7 place-items-center rounded-lg bg-warning/15 text-warning">
               <AlertTriangle className="h-4 w-4" />
@@ -222,9 +223,21 @@ function AnswerPage() {
         {/* 5. 参考情報 */}
         <SectionCard title="参考情報" icon={<Youtube className="h-4 w-4" />} delay="350ms">
           <div className="grid gap-3 sm:grid-cols-3">
-            <RefColumn title="YouTube" icon={<Youtube className="h-4 w-4" />} items={REFS.youtube} />
-            <RefColumn title="みんカラ" icon={<MessageCircle className="h-4 w-4" />} items={REFS.minkara} />
-            <RefColumn title="メーカー公式" icon={<Building2 className="h-4 w-4" />} items={REFS.official} />
+            <RefColumn
+              title="YouTube"
+              icon={<Youtube className="h-4 w-4" />}
+              items={REFS.youtube}
+            />
+            <RefColumn
+              title="みんカラ"
+              icon={<MessageCircle className="h-4 w-4" />}
+              items={REFS.minkara}
+            />
+            <RefColumn
+              title="メーカー公式"
+              icon={<Building2 className="h-4 w-4" />}
+              items={REFS.official}
+            />
           </div>
         </SectionCard>
 
@@ -245,7 +258,10 @@ function AnswerPage() {
         </SectionCard>
 
         {/* 7. Feedback */}
-        <div className="animate-fade-in rounded-2xl border border-border bg-card/40 p-6 backdrop-blur" style={{ animationDelay: "490ms" }}>
+        <div
+          className="animate-fade-in rounded-2xl border border-border bg-card/40 p-6 backdrop-blur"
+          style={{ animationDelay: "490ms" }}
+        >
           <div className="flex flex-col items-center gap-4 text-center">
             <p className="text-sm text-muted-foreground">この回答は役に立ちましたか？</p>
             <div className="flex gap-3">
