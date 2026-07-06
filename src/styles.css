@@ -30,6 +30,8 @@
   --color-ring: var(--ring);
   --color-accent-blue: var(--accent-blue);
   --color-accent-blue-glow: var(--accent-blue-glow);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
   --font-display: "Inter", "Noto Sans JP", sans-serif;
 }
 
