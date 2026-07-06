@@ -59,6 +59,8 @@
   --ring: oklch(0.65 0.22 254);
   --accent-blue: oklch(0.65 0.22 254);
   --accent-blue-glow: oklch(0.75 0.18 254);
+  --warning: oklch(0.75 0.15 85);
+  --warning-foreground: oklch(0.2 0.01 60);
 }
 
 @layer base {
