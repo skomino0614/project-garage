@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
-import { useState } from "react";
-import { Search, ChevronRight } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Search, ChevronRight, Check } from "lucide-react";
 import { GarageNav } from "../components/GarageNav";
 
 type Search = { maker?: string; model?: string; year?: string; q?: string };
@@ -18,19 +18,92 @@ export const Route = createFileRoute("/ask")({
 
 const CHIPS = ["ドラレコ", "ホイール", "車高調", "コーティング", "リセール"];
 
+const CHECKLIST = [
+  "YouTubeを分析中",
+  "オーナーレビューを確認中",
+  "メーカー情報を整理中",
+  "最適な提案を作成中",
+];
+
 function AskPage() {
   const navigate = useNavigate();
   const search = Route.useSearch();
   const [question, setQuestion] = useState(search.q ?? "");
+  const [isLoading, setIsLoading] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(0);
 
   const maker = search.maker ?? "トヨタ";
   const model = search.model ?? "ヴォクシー";
   const year = search.year ?? "90系";
 
+  useEffect(() => {
+    if (!isLoading) return;
+
+    const timers: ReturnType<typeof setTimeout>[] = [];
+
+    CHECKLIST.forEach((_, i) => {
+      const timer = setTimeout(() => {
+        setVisibleCount((prev) => Math.max(prev, i + 1));
+      }, (i + 1) * 800);
+      timers.push(timer);
+    });
+
+    const navigateTimer = setTimeout(() => {
+      navigate({ to: "/answer", search: { q: question, maker, model, year } as never });
+    }, 4500);
+    timers.push(navigateTimer);
+
+    return () => {
+      timers.forEach((t) => clearTimeout(t));
+    };
+  }, [isLoading, question, maker, model, year, navigate]);
+
   const submit = () => {
     if (!question.trim()) return;
-    navigate({ to: "/answer", search: { q: question, maker, model, year } as never });
+    setIsLoading(true);
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <GarageNav />
+        <main className="flex min-h-[calc(100vh-4rem)] flex-col items-center justify-center px-5">
+          <div className="animate-fade-in w-full max-w-md text-center">
+            <div className="relative mx-auto mb-8 h-12 w-12">
+              <div className="absolute inset-0 rounded-full border-2 border-primary/20" />
+              <div className="absolute inset-0 animate-spin rounded-full border-2 border-transparent border-t-primary" />
+            </div>
+            <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">
+              AIが情報を整理しています...
+            </h1>
+            <div className="mt-8 space-y-3 text-left">
+              {CHECKLIST.map((item, i) => (
+                <div
+                  key={item}
+                  className={`flex items-center gap-3 rounded-xl border border-border/50 bg-card/40 px-4 py-3 backdrop-blur transition-all duration-500 ${
+                    i < visibleCount
+                      ? "translate-x-0 opacity-100"
+                      : "translate-x-3 opacity-0"
+                  }`}
+                >
+                  <span
+                    className={`grid h-5 w-5 place-items-center rounded-full border transition-colors duration-300 ${
+                      i < visibleCount
+                        ? "border-primary bg-primary/15 text-primary"
+                        : "border-border bg-transparent text-muted-foreground"
+                    }`}
+                  >
+                    <Check className="h-3 w-3" />
+                  </span>
+                  <span className="text-sm text-foreground/90">{item}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
