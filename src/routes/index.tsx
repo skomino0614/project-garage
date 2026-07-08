@@ -10,7 +10,7 @@ export const Route = createFileRoute("/")({
 
 const HOME_SERIES = ["90 Series", "80 Series", "70 Series", "2024", "2023", "2022", "2021", "2020"];
 
-const CHIPS = ["ドラレコ", "ホイール", "車高調", "コーティング", "タイヤ"];
+const CHIPS = ["ドラレコ", "ホイール", "タイヤ", "車高調", "コーティング", "リセール"];
 
 function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
@@ -133,7 +133,7 @@ function Home() {
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && submit()}
-                placeholder="「90系ヴォクシーにおすすめのドラレコは？」"
+                placeholder="あなたの車について何でも相談してください"
                 className="h-16 w-full rounded-3xl bg-transparent pl-14 pr-14 text-base text-foreground placeholder:text-muted-foreground/60 outline-none sm:h-18 sm:text-lg"
               />
               <button
@@ -144,6 +144,19 @@ function Home() {
                 <ArrowRight className="h-5 w-5" />
               </button>
             </div>
+          </div>
+
+          {/* Examples */}
+          <div className="animate-fade-in mx-auto mt-3 w-full max-w-2xl text-center">
+            <p className="text-xs leading-relaxed text-muted-foreground/60">
+              例）
+              <br />
+              ・20万円以内でおすすめホイールは？
+              <br />
+              ・90系ヴォクシーにおすすめのドラレコは？
+              <br />
+              ・乗り心地を落とさずローダウンしたい
+            </p>
           </div>
 
           {/* Chips */}
