@@ -7,6 +7,7 @@ import {
   AlertTriangle,
   Sparkles,
   Camera,
+  ListChecks,
 } from "lucide-react";
 import { GarageNav } from "../components/GarageNav";
 import heroImage from "@/assets/dashcam-hero.jpg";
@@ -14,7 +15,7 @@ import heroImage from "@/assets/dashcam-hero.jpg";
 type Search = { q?: string; maker?: string; model?: string; year?: string };
 
 export const Route = createFileRoute("/answer")({
-  head: () => ({ meta: [{ title: "AI回答 — Project Garage" }] }),
+  head: () => ({ meta: [{ title: "あなたへの提案 — Project Garage" }] }),
   validateSearch: (s: Record<string, unknown>): Search => ({
     q: typeof s.q === "string" ? s.q : undefined,
     maker: typeof s.maker === "string" ? s.maker : undefined,
@@ -80,6 +81,13 @@ function AnswerPage() {
   };
   const question = q ?? "90系ヴォクシーにおすすめのドラレコは？";
 
+  const conditions = [
+    { label: "車種", value: `${car.year} ${car.model}` },
+    { label: "予算", value: "4万円以内" },
+    { label: "重視", value: "夜間画質" },
+    { label: "用途", value: "家族利用" },
+  ];
+
   return (
     <div className="min-h-screen bg-background">
       <GarageNav />
@@ -97,7 +105,7 @@ function AnswerPage() {
         <div className="animate-fade-in mb-6">
           <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-border/80 bg-card/50 px-3 py-1 text-xs text-muted-foreground backdrop-blur">
             <Sparkles className="h-3 w-3 text-primary" />
-            AI回答
+            あなたへの提案
           </div>
           <div className="mb-3 inline-flex items-center gap-1.5 text-xs text-muted-foreground">
             <span className="text-foreground/80">{car.maker}</span>
@@ -111,15 +119,8 @@ function AnswerPage() {
           </h1>
         </div>
 
-        {/* 1. あなたへの提案 */}
-        <div className="animate-fade-in mb-6 text-center" style={{ animationDelay: "70ms" }}>
-          <span className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
-            あなたへの提案
-          </span>
-        </div>
-
-        {/* 2. 商品カード */}
-        <section className="animate-fade-in mb-6" style={{ animationDelay: "140ms" }}>
+        {/* 1. 商品カード */}
+        <section className="animate-fade-in mb-6" style={{ animationDelay: "70ms" }}>
           <div className="overflow-hidden rounded-3xl border border-border bg-card/50 backdrop-blur transition-all hover:border-primary/40">
             <div className="aspect-[16/10] overflow-hidden bg-muted">
               <img
@@ -131,11 +132,15 @@ function AnswerPage() {
               />
             </div>
             <div className="p-6 sm:p-8">
+              <p className="mb-4 inline-flex items-center gap-2 rounded-full bg-primary/15 px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-primary">
+                <Sparkles className="h-3 w-3" />
+                この条件ならこれがベストです。
+              </p>
               <div className="mb-4 flex items-center gap-2">
                 <Rating value={PICK.rating} />
                 <span className="text-xs font-medium text-foreground/80">{PICK.rating}</span>
                 <span className="text-xs text-muted-foreground">（{PICK.reviews}件）</span>
-                <span className="ml-auto rounded-full bg-primary/15 px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-primary">
+                <span className="ml-auto rounded-full border border-border/80 bg-card/40 px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
                   おすすめ
                 </span>
               </div>
@@ -150,9 +155,30 @@ function AnswerPage() {
           </div>
         </section>
 
-        {/* 3. この商品をおすすめする理由 */}
+        {/* 2. あなたの条件 */}
         <SectionCard
-          title="この商品をおすすめする理由"
+          title="あなたの条件"
+          icon={<ListChecks className="h-4 w-4" />}
+          delay="140ms"
+        >
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            {conditions.map((c) => (
+              <div
+                key={c.label}
+                className="rounded-xl border border-border/60 bg-background/40 p-3"
+              >
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  {c.label}
+                </p>
+                <p className="mt-1 text-sm font-medium text-foreground/90">{c.value}</p>
+              </div>
+            ))}
+          </div>
+        </SectionCard>
+
+        {/* 3. あなたにおすすめする理由 */}
+        <SectionCard
+          title="あなたにおすすめする理由"
           icon={<CheckCircle2 className="h-4 w-4" />}
           delay="210ms"
         >
@@ -221,19 +247,18 @@ function AnswerPage() {
           </div>
         </SectionCard>
 
-        {/* 7. まだ迷っていますか？ */}
+        {/* 7. 次のステップ */}
         <div
           className="animate-fade-in rounded-2xl border border-border bg-card/40 p-6 backdrop-blur"
           style={{ animationDelay: "490ms" }}
         >
           <div className="flex flex-col items-center gap-4 text-center">
-            <p className="text-sm font-medium text-foreground/90">まだ迷っていますか？</p>
             <div className="flex flex-col gap-3 sm:flex-row sm:gap-4">
               <Link
                 to="/"
                 className="inline-flex items-center justify-center gap-2 rounded-full border border-border bg-card/40 px-6 py-2.5 text-sm font-medium text-muted-foreground transition-all hover-scale hover:text-foreground"
               >
-                別の商品も比較する
+                他の商品も比較しますか？
               </Link>
               <Link
                 to="/ask"
@@ -241,7 +266,7 @@ function AnswerPage() {
                 className="inline-flex items-center justify-center gap-2 rounded-full bg-primary px-6 py-2.5 text-sm font-medium text-primary-foreground transition-all hover-scale hover:bg-primary/90"
               >
                 <ArrowLeft className="h-4 w-4" />
-                もう一度質問する
+                予算を変える
               </Link>
             </div>
           </div>
