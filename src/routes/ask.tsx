@@ -30,9 +30,11 @@ const CHECKLIST = [
 function AskPage() {
   const navigate = useNavigate();
   const search = Route.useSearch();
+  const fetchAnswer = useServerFn(getAnswer);
   const [question, setQuestion] = useState(search.q ?? "");
   const [isLoading, setIsLoading] = useState(false);
   const [visibleCount, setVisibleCount] = useState(0);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const maker = search.maker ?? "トヨタ";
   const model = search.model ?? "ヴォクシー";
@@ -42,26 +44,40 @@ function AskPage() {
     if (!isLoading) return;
 
     const timers: ReturnType<typeof setTimeout>[] = [];
-
     CHECKLIST.forEach((_, i) => {
-      const timer = setTimeout(() => {
-        setVisibleCount((prev) => Math.max(prev, i + 1));
-      }, (i + 1) * 800);
-      timers.push(timer);
+      timers.push(
+        setTimeout(() => {
+          setVisibleCount((prev) => Math.max(prev, i + 1));
+        }, (i + 1) * 800),
+      );
     });
 
-    const navigateTimer = setTimeout(() => {
-      navigate({ to: "/answer", search: { q: question, maker, model, year } as never });
-    }, 4500);
-    timers.push(navigateTimer);
+    const minDelay = new Promise((r) => setTimeout(r, 4000));
+    const call = fetchAnswer({ data: { q: question, maker, model, year } });
+
+    Promise.all([call, minDelay])
+      .then(([result]) => {
+        sessionStorage.setItem(
+          "garage:answer",
+          JSON.stringify({ q: question, maker, model, year, result }),
+        );
+        navigate({ to: "/answer", search: { q: question, maker, model, year } as never });
+      })
+      .catch((err) => {
+        console.error(err);
+        setErrorMsg("提案の生成に失敗しました。もう一度お試しください。");
+        setIsLoading(false);
+      });
 
     return () => {
       timers.forEach((t) => clearTimeout(t));
     };
-  }, [isLoading, question, maker, model, year, navigate]);
+  }, [isLoading, question, maker, model, year, navigate, fetchAnswer]);
 
   const submit = () => {
     if (!question.trim()) return;
+    setErrorMsg(null);
+    setVisibleCount(0);
     setIsLoading(true);
   };
 
