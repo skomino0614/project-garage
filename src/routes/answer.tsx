@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 import {
   Star,
   ArrowLeft,
@@ -11,6 +12,7 @@ import {
 } from "lucide-react";
 import { GarageNav } from "../components/GarageNav";
 import heroImage from "@/assets/dashcam-hero.jpg";
+import type { AnswerResult } from "@/lib/answer.functions";
 
 type Search = { q?: string; maker?: string; model?: string; year?: string };
 
@@ -25,54 +27,56 @@ export const Route = createFileRoute("/answer")({
   component: AnswerPage,
 });
 
-const PICK = {
-  name: "70mai A810",
-  rating: 4.9,
-  reviews: 124,
-  price: "¥35,000 前後",
+const FALLBACK: AnswerResult = {
+  product: {
+    name: "70mai A810",
+    price: "¥35,000 前後",
+    rating: 4.9,
+    reviews: 124,
+    tagline: "この条件ならこれがベストです。",
+  },
+  conditions: [
+    { label: "車種", value: "90系 ヴォクシー" },
+    { label: "予算", value: "4万円以内" },
+    { label: "重視", value: "夜間画質" },
+    { label: "用途", value: "家族利用" },
+  ],
+  reasons: [
+    "ワイドなフロントガラスに前後2カメラが設置しやすい",
+    "夜間のノイズ抑制とナンバー読み取り性能が高い",
+    "駐車監視オプションで普段使いもカバーできる",
+  ],
+  recommendedFor: [
+    "4K前後撮影とナンバー読み取りを重視する人",
+    "スマホで簡単に映像を確認したい人",
+    "駐車監視であおり運転や当て逃げを防ぎたい人",
+  ],
+  cautions: [
+    "前後カメラの配線は専門店での取り付けを推奨",
+    "microSDの容量・耐久性を確認（高耐久品を選ぶ）",
+    "常時電源が必要な駐車監視はバッテリーへの影響を把握",
+  ],
+  alternatives: [
+    { name: "Yupiteru DRY-WiFiV3c", rating: 4.5, price: "¥45,000 前後", bestFor: "Wi-Fi転送でスマホ確認が便利" },
+    { name: "KENWOOD DRV-MN940", rating: 4.7, price: "¥55,000 前後", bestFor: "高画質と完成度の高い駐車監視" },
+    { name: "Pioneer VREC-DH300D", rating: 4.3, price: "¥28,000 前後", bestFor: "コスパ重視でシンプルな1カメラ" },
+  ],
 };
-
-const REASONS = [
-  "90系ヴォクシーのワイドなフロントガラスに前後2カメラが設置しやすい",
-  "夜間のノイズ抑制とナンバー読み取り性能が高い",
-  "駐車監視オプションで普段使いもカバーできる",
-];
-
-const RECOMMENDED_FOR = [
-  "4K前後撮影とナンバー読み取りを重視する人",
-  "スマホで簡単に映像を確認したい人",
-  "駐車監視であおり運転や当て逃げを防ぎたい人",
-];
-
-const CAUTIONS = [
-  "前後カメラの配線は専門店での取り付けを推奨",
-  "microSDの容量・耐久性を確認（高耐久品を選ぶ）",
-  "常時電源が必要な駐車監視はバッテリーへの影響を把握",
-];
-
-const ALTERNATIVES = [
-  {
-    name: "Yupiteru DRY-WiFiV3c",
-    rating: 4.5,
-    price: "¥45,000 前後",
-    bestFor: "Wi-Fi転送でスマホ確認が便利",
-  },
-  {
-    name: "KENWOOD DRV-MN940",
-    rating: 4.7,
-    price: "¥55,000 前後",
-    bestFor: "高画質と完成度の高い駐車監視",
-  },
-  {
-    name: "Pioneer VREC-DH300D",
-    rating: 4.3,
-    price: "¥28,000 前後",
-    bestFor: "コスパ重視でシンプルな1カメラ",
-  },
-];
 
 function AnswerPage() {
   const { q, maker, model, year } = Route.useSearch();
+  const [data, setData] = useState<AnswerResult>(FALLBACK);
+
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem("garage:answer");
+      if (!raw) return;
+      const parsed = JSON.parse(raw) as { result?: AnswerResult };
+      if (parsed?.result) setData(parsed.result);
+    } catch (e) {
+      console.error(e);
+    }
+  }, []);
 
   const car = {
     maker: maker ?? "トヨタ",
@@ -80,13 +84,13 @@ function AnswerPage() {
     year: year ?? "90系",
   };
   const question = q ?? "90系ヴォクシーにおすすめのドラレコは？";
+  const PICK = data.product;
+  const REASONS = data.reasons;
+  const RECOMMENDED_FOR = data.recommendedFor;
+  const CAUTIONS = data.cautions;
+  const ALTERNATIVES = data.alternatives;
+  const conditions = data.conditions;
 
-  const conditions = [
-    { label: "車種", value: `${car.year} ${car.model}` },
-    { label: "予算", value: "4万円以内" },
-    { label: "重視", value: "夜間画質" },
-    { label: "用途", value: "家族利用" },
-  ];
 
   return (
     <div className="min-h-screen bg-background">
