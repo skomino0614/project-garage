@@ -126,6 +126,13 @@ function AskPage() {
   return (
     <div className="min-h-screen bg-background">
       <GarageNav />
+      {errorMsg && (
+        <div className="mx-auto mt-4 max-w-2xl px-5">
+          <div className="rounded-xl border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+            {errorMsg}
+          </div>
+        </div>
+      )}
       <main className="mx-auto max-w-2xl px-5 py-14 sm:py-24">
         {/* Vehicle breadcrumb */}
         <Link
