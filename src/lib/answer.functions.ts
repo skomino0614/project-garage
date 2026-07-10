@@ -9,26 +9,23 @@ const InputSchema = z.object({
   year: z.string().optional(),
 });
 
+const AlternativeSchema = z.object({
+  name: z.string(),
+  brand: z.string(),
+  price: z.string(),
+  image_query: z.string(),
+});
+
 const AnswerSchema = z.object({
-  product: z.object({
-    name: z.string(),
-    price: z.string(),
-    rating: z.number(),
-    reviews: z.number(),
-    tagline: z.string(),
-  }),
-  conditions: z.array(z.object({ label: z.string(), value: z.string() })),
-  reasons: z.array(z.string()),
-  recommendedFor: z.array(z.string()),
-  cautions: z.array(z.string()),
-  alternatives: z.array(
-    z.object({
-      name: z.string(),
-      rating: z.number(),
-      price: z.string(),
-      bestFor: z.string(),
-    }),
-  ),
+  title: z.string(),
+  brand: z.string(),
+  price: z.string(),
+  summary: z.string(),
+  image_query: z.string(),
+  reason: z.array(z.string()),
+  recommended_for: z.array(z.string()),
+  warnings: z.array(z.string()),
+  alternatives: z.array(AlternativeSchema),
 });
 
 export type AnswerResult = z.infer<typeof AnswerSchema>;
@@ -44,9 +41,16 @@ export const getAnswer = createServerFn({ method: "POST" })
     const { object } = await generateObject({
       model: openai("gpt-4o-mini"),
       schema: AnswerSchema,
-      system:
-        "あなたは日本の車カスタムの専門家です。ユーザーの車と質問から、最適な商品提案をJSONで返してください。価格は日本円で「¥XX,XXX 前後」形式。ratingは0-5の小数、reviewsは件数。日本語で回答。",
-      prompt: `車: ${car || "不明"}\n質問: ${data.q}\n\n以下を返してください:\n- product: 一番のおすすめ商品 (name, price, rating, reviews, tagline)\n  taglineは「この条件ならこれがベストです。」のような一言\n- conditions: ユーザーの条件を4項目 (車種/予算/重視/用途 など、labelとvalue)\n- reasons: おすすめする理由を3つ\n- recommendedFor: こんな人におすすめを3項目\n- cautions: 購入前の注意点を3項目\n- alternatives: 他の候補を3つ (name, rating, price, bestFor)`,
+      system: [
+        "あなたは日本の車カスタム・アフターパーツの専門家です。",
+        "ユーザーの車と質問に対して、その車に本当に最適な1つの商品を提案してください。",
+        "回答は必ず指定されたJSONスキーマに厳密に従ってください。日本語で回答してください。",
+        "価格は日本円で「¥XX,XXX 前後」の形式で記載してください。",
+        "image_query には Google画像検索でその商品が確実にヒットする、ブランド名を含む正式な商品名（英数字表記優先）を入れてください。例:「70mai Dash Cam A810」。",
+        "reason は3つ、recommended_for は3つ、warnings は2〜3つ、alternatives は3つ入れてください。",
+        "summary は「この条件ならこれがベストです。」のような短い一言キャッチにしてください。",
+      ].join("\n"),
+      prompt: `車: ${car || "不明"}\n質問: ${data.q}\n\n上記に最適な商品を、指定のJSON形式で返してください。`,
     });
 
     return object;

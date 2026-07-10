@@ -1,17 +1,14 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import {
-  Star,
   ArrowLeft,
   ChevronRight,
   CheckCircle2,
   AlertTriangle,
   Sparkles,
   Camera,
-  ListChecks,
 } from "lucide-react";
 import { GarageNav } from "../components/GarageNav";
-import heroImage from "@/assets/dashcam-hero.jpg";
 import type { AnswerResult } from "@/lib/answer.functions";
 
 type Search = { q?: string; maker?: string; model?: string; year?: string };
@@ -28,40 +25,36 @@ export const Route = createFileRoute("/answer")({
 });
 
 const FALLBACK: AnswerResult = {
-  product: {
-    name: "70mai A810",
-    price: "¥35,000 前後",
-    rating: 4.9,
-    reviews: 124,
-    tagline: "この条件ならこれがベストです。",
-  },
-  conditions: [
-    { label: "車種", value: "90系 ヴォクシー" },
-    { label: "予算", value: "4万円以内" },
-    { label: "重視", value: "夜間画質" },
-    { label: "用途", value: "家族利用" },
-  ],
-  reasons: [
+  title: "70mai Dash Cam A810",
+  brand: "70mai",
+  price: "¥35,000 前後",
+  summary: "この条件ならこれがベストです。",
+  image_query: "70mai Dash Cam A810",
+  reason: [
     "ワイドなフロントガラスに前後2カメラが設置しやすい",
     "夜間のノイズ抑制とナンバー読み取り性能が高い",
     "駐車監視オプションで普段使いもカバーできる",
   ],
-  recommendedFor: [
+  recommended_for: [
     "4K前後撮影とナンバー読み取りを重視する人",
     "スマホで簡単に映像を確認したい人",
     "駐車監視であおり運転や当て逃げを防ぎたい人",
   ],
-  cautions: [
+  warnings: [
     "前後カメラの配線は専門店での取り付けを推奨",
     "microSDの容量・耐久性を確認（高耐久品を選ぶ）",
     "常時電源が必要な駐車監視はバッテリーへの影響を把握",
   ],
   alternatives: [
-    { name: "Yupiteru DRY-WiFiV3c", rating: 4.5, price: "¥45,000 前後", bestFor: "Wi-Fi転送でスマホ確認が便利" },
-    { name: "KENWOOD DRV-MN940", rating: 4.7, price: "¥55,000 前後", bestFor: "高画質と完成度の高い駐車監視" },
-    { name: "Pioneer VREC-DH300D", rating: 4.3, price: "¥28,000 前後", bestFor: "コスパ重視でシンプルな1カメラ" },
+    { name: "DRY-WiFiV3c", brand: "Yupiteru", price: "¥45,000 前後", image_query: "Yupiteru DRY-WiFiV3c" },
+    { name: "DRV-MN940", brand: "KENWOOD", price: "¥55,000 前後", image_query: "KENWOOD DRV-MN940" },
+    { name: "VREC-DH300D", brand: "Pioneer", price: "¥28,000 前後", image_query: "Pioneer VREC-DH300D" },
   ],
 };
+
+function imageUrl(query: string) {
+  return `https://source.unsplash.com/featured/?${encodeURIComponent(query)}`;
+}
 
 function AnswerPage() {
   const { q, maker, model, year } = Route.useSearch();
@@ -84,13 +77,6 @@ function AnswerPage() {
     year: year ?? "90系",
   };
   const question = q ?? "90系ヴォクシーにおすすめのドラレコは？";
-  const PICK = data.product;
-  const REASONS = data.reasons;
-  const RECOMMENDED_FOR = data.recommendedFor;
-  const CAUTIONS = data.cautions;
-  const ALTERNATIVES = data.alternatives;
-  const conditions = data.conditions;
-
 
   return (
     <div className="min-h-screen bg-background">
@@ -123,71 +109,40 @@ function AnswerPage() {
           </h1>
         </div>
 
-        {/* 1. 商品カード */}
+        {/* 商品カード */}
         <section className="animate-fade-in mb-6" style={{ animationDelay: "70ms" }}>
           <div className="overflow-hidden rounded-3xl border border-border bg-card/50 backdrop-blur transition-all hover:border-primary/40">
             <div className="aspect-[16/10] overflow-hidden bg-muted">
               <img
-                src={heroImage}
-                alt={PICK.name}
-                width={1024}
-                height={768}
+                src={imageUrl(data.image_query)}
+                alt={data.title}
                 className="h-full w-full object-cover"
               />
             </div>
             <div className="p-6 sm:p-8">
               <p className="mb-4 inline-flex items-center gap-2 rounded-full bg-primary/15 px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-primary">
                 <Sparkles className="h-3 w-3" />
-                この条件ならこれがベストです。
+                {data.summary}
               </p>
-              <div className="mb-4 flex items-center gap-2">
-                <Rating value={PICK.rating} />
-                <span className="text-xs font-medium text-foreground/80">{PICK.rating}</span>
-                <span className="text-xs text-muted-foreground">（{PICK.reviews}件）</span>
-                <span className="ml-auto rounded-full border border-border/80 bg-card/40 px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-                  おすすめ
-                </span>
-              </div>
-              <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">
-                {PICK.name}
+              <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                {data.brand}
+              </p>
+              <h2 className="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl">
+                {data.title}
               </h2>
-              <p className="mt-3 text-lg font-semibold text-foreground">{PICK.price}</p>
-              <p className="mt-2 text-xs text-muted-foreground">
-                {car.year} {car.model}対応
-              </p>
+              <p className="mt-3 text-lg font-semibold text-foreground">{data.price}</p>
             </div>
           </div>
         </section>
 
-        {/* 2. あなたの条件 */}
-        <SectionCard
-          title="あなたの条件"
-          icon={<ListChecks className="h-4 w-4" />}
-          delay="140ms"
-        >
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            {conditions.map((c) => (
-              <div
-                key={c.label}
-                className="rounded-xl border border-border/60 bg-background/40 p-3"
-              >
-                <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                  {c.label}
-                </p>
-                <p className="mt-1 text-sm font-medium text-foreground/90">{c.value}</p>
-              </div>
-            ))}
-          </div>
-        </SectionCard>
-
-        {/* 3. あなたにおすすめする理由 */}
+        {/* あなたにおすすめする理由 */}
         <SectionCard
           title="あなたにおすすめする理由"
           icon={<CheckCircle2 className="h-4 w-4" />}
           delay="210ms"
         >
           <ul className="space-y-3">
-            {REASONS.map((r) => (
+            {data.reason.map((r) => (
               <li
                 key={r}
                 className="flex items-start gap-3 text-sm leading-relaxed text-foreground/90"
@@ -199,14 +154,14 @@ function AnswerPage() {
           </ul>
         </SectionCard>
 
-        {/* 4. こんな人におすすめ */}
+        {/* こんな人におすすめ */}
         <SectionCard
           title="こんな人におすすめ"
           icon={<Sparkles className="h-4 w-4" />}
           delay="280ms"
         >
           <ul className="space-y-3">
-            {RECOMMENDED_FOR.map((r) => (
+            {data.recommended_for.map((r) => (
               <li
                 key={r}
                 className="flex items-start gap-3 text-sm leading-relaxed text-foreground/90"
@@ -218,7 +173,7 @@ function AnswerPage() {
           </ul>
         </SectionCard>
 
-        {/* 5. 購入前の注意点 */}
+        {/* 購入前の注意点 */}
         <section
           className="animate-fade-in mb-6 overflow-hidden rounded-2xl border border-warning/20 bg-warning/5 backdrop-blur"
           style={{ animationDelay: "350ms" }}
@@ -230,7 +185,7 @@ function AnswerPage() {
             <h2 className="text-sm font-semibold tracking-tight">購入前の注意点</h2>
           </header>
           <ul className="space-y-3 p-6">
-            {CAUTIONS.map((c) => (
+            {data.warnings.map((c) => (
               <li
                 key={c}
                 className="flex items-start gap-3 text-sm leading-relaxed text-foreground/90"
@@ -242,16 +197,16 @@ function AnswerPage() {
           </ul>
         </section>
 
-        {/* 6. 他の候補 */}
+        {/* 他の候補 */}
         <SectionCard title="他の候補" icon={<Sparkles className="h-4 w-4" />} delay="420ms">
           <div className="grid gap-3 sm:grid-cols-3">
-            {ALTERNATIVES.map((alt, i) => (
+            {data.alternatives.map((alt, i) => (
               <AlternativeCard key={alt.name} product={alt} delay={`${i * 60}ms`} />
             ))}
           </div>
         </SectionCard>
 
-        {/* 7. 次のステップ */}
+        {/* 次のステップ */}
         <div
           className="animate-fade-in rounded-2xl border border-border bg-card/40 p-6 backdrop-blur"
           style={{ animationDelay: "490ms" }}
@@ -314,36 +269,29 @@ function AlternativeCard({
   product: AnswerResult["alternatives"][number];
   delay: string;
 }) {
+  const [imgError, setImgError] = useState(false);
   return (
     <div
       className="animate-fade-in group rounded-xl border border-border/70 bg-background/40 p-4 transition-all hover:border-primary/60"
       style={{ animationDelay: delay }}
     >
-      <div className="flex aspect-video items-center justify-center rounded-lg bg-muted/50">
-        <Camera className="h-8 w-8 text-muted-foreground/50" />
+      <div className="flex aspect-video items-center justify-center overflow-hidden rounded-lg bg-muted/50">
+        {imgError ? (
+          <Camera className="h-8 w-8 text-muted-foreground/50" />
+        ) : (
+          <img
+            src={imageUrl(product.image_query)}
+            alt={product.name}
+            onError={() => setImgError(true)}
+            className="h-full w-full object-cover"
+          />
+        )}
       </div>
-      <h3 className="mt-3 text-sm font-semibold">{product.name}</h3>
-      <div className="mt-1 flex items-center gap-1.5">
-        <Rating value={product.rating} />
-        <span className="text-xs font-medium text-foreground/80">{product.rating}</span>
-      </div>
-      <p className="mt-2 text-xs text-muted-foreground">{product.bestFor}</p>
-      <p className="mt-1 text-sm font-semibold">{product.price}</p>
-    </div>
-  );
-}
-
-function Rating({ value }: { value: number }) {
-  return (
-    <div className="flex items-center gap-0.5">
-      {[0, 1, 2, 3, 4].map((i) => (
-        <Star
-          key={i}
-          className={`h-3.5 w-3.5 ${
-            i < Math.round(value) ? "fill-primary text-primary" : "text-muted-foreground/30"
-          }`}
-        />
-      ))}
+      <p className="mt-3 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+        {product.brand}
+      </p>
+      <h3 className="mt-0.5 text-sm font-semibold">{product.name}</h3>
+      <p className="mt-2 text-sm font-semibold">{product.price}</p>
     </div>
   );
 }
