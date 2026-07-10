@@ -1,7 +1,9 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { Search, ChevronRight, Check } from "lucide-react";
 import { GarageNav } from "../components/GarageNav";
+import { getAnswer } from "@/lib/answer.functions";
 
 type Search = { maker?: string; model?: string; year?: string; q?: string };
 
