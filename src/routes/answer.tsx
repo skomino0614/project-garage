@@ -311,7 +311,7 @@ function AlternativeCard({
   product,
   delay,
 }: {
-  product: (typeof ALTERNATIVES)[number];
+  product: AnswerResult["alternatives"][number];
   delay: string;
 }) {
   return (
