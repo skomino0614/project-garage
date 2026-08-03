@@ -26,10 +26,18 @@ const RecommendedSchema = z.object({
   warnings: z.array(z.string()),
 });
 
+const EvidenceSchema = z.object({
+  maker_official: z.string(),
+  owner_reviews: z.string(),
+  youtube_reviews: z.string(),
+  ai_overall: z.string(),
+});
+
 const ModelOutputSchema = z.object({
   summary: z.string(),
   recommended: RecommendedSchema,
   alternatives: z.array(AlternativeSchema),
+  evidence: EvidenceSchema,
 });
 
 const AnswerSchema = z.object({
@@ -42,6 +50,7 @@ const AnswerSchema = z.object({
   recommended_for: z.array(z.string()),
   warnings: z.array(z.string()),
   alternatives: z.array(AlternativeSchema),
+  evidence: EvidenceSchema,
 });
 
 export type AnswerResult = z.infer<typeof AnswerSchema>;
