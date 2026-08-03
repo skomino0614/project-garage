@@ -81,6 +81,13 @@ export const getAnswer = createServerFn({ method: "POST" })
         "image_query には Google画像検索でその商品が確実にヒットする、ブランド名を含む正式な商品名（英数字表記優先）を入れてください。例:「70mai Dash Cam A810」。",
         "reason は3つ、recommended_for は3つ、warnings は2つ、alternatives は3つ入れてください。",
         "summary は短い一言キャッチにしてください。",
+        "",
+        "【回答の根拠 (evidence)】",
+        "evidence.maker_official にはメーカー公式が公表しているスペック・仕様の要点を書いてください。",
+        "evidence.owner_reviews にはオーナーレビューで多く語られている評価傾向を書いてください。",
+        "evidence.youtube_reviews にはYouTubeレビューでの評価傾向を書いてください。",
+        "evidence.ai_overall には上記を踏まえたAIとしての総合評価を書いてください。",
+        "確かな情報がない項目は推測せず、必ず空文字 \"\" にしてください。",
       ].join("\n"),
       prompt: `車: ${car || "不明"}\n質問: ${data.q}\n\n上記に最適な商品を、指定のJSON形式で返してください。`,
     });
