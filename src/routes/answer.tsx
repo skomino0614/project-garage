@@ -8,9 +8,12 @@ import {
   Sparkles,
   Camera,
   FileSearch,
+  Database,
 } from "lucide-react";
 import { GarageNav } from "../components/GarageNav";
 import type { AnswerResult } from "@/lib/answer.functions";
+import { buildSourceCards, type SourceCard } from "@/lib/sources";
+
 
 type Search = { q?: string; maker?: string; model?: string; year?: string };
 
