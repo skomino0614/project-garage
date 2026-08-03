@@ -103,6 +103,7 @@ export const getAnswer = createServerFn({ method: "POST" })
       recommended_for: r.recommended_for,
       warnings: r.warnings,
       alternatives: object.alternatives,
+      evidence: object.evidence,
     };
   });
 
