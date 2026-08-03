@@ -215,6 +215,18 @@ function AnswerPage() {
           </div>
         </SectionCard>
 
+        {/* 参考情報（回答の根拠） */}
+        <GroupLabel label="参考情報" delay="450ms" />
+
+        <SectionCard title="回答の根拠" icon={<FileSearch className="h-4 w-4" />} delay="460ms">
+          <div className="space-y-3">
+            <EvidenceRow label="メーカー公式情報" value={data.evidence.maker_official} />
+            <EvidenceRow label="オーナーレビュー" value={data.evidence.owner_reviews} />
+            <EvidenceRow label="YouTubeレビュー" value={data.evidence.youtube_reviews} />
+            <EvidenceRow label="AI総合評価" value={data.evidence.ai_overall} />
+          </div>
+        </SectionCard>
+
         {/* 次のステップ */}
         <div
           className="animate-fade-in rounded-2xl border border-border bg-card/40 p-6 backdrop-blur"
