@@ -7,6 +7,7 @@ import {
   AlertTriangle,
   Sparkles,
   Camera,
+  FileSearch,
 } from "lucide-react";
 import { GarageNav } from "../components/GarageNav";
 import type { AnswerResult } from "@/lib/answer.functions";
@@ -50,6 +51,12 @@ const FALLBACK: AnswerResult = {
     { name: "DRV-MN940", brand: "KENWOOD", price: "¥55,000 前後", image_query: "KENWOOD DRV-MN940" },
     { name: "VREC-DH300D", brand: "Pioneer", price: "¥28,000 前後", image_query: "Pioneer VREC-DH300D" },
   ],
+  evidence: {
+    maker_official: "",
+    owner_reviews: "",
+    youtube_reviews: "",
+    ai_overall: "",
+  },
 };
 
 function imageUrl(query: string) {
@@ -135,6 +142,9 @@ function AnswerPage() {
           </div>
         </section>
 
+        {/* AIの意見 */}
+        <GroupLabel label="AIの意見" delay="180ms" />
+
         {/* あなたにおすすめする理由 */}
         <SectionCard
           title="あなたにおすすめする理由"
@@ -203,6 +213,18 @@ function AnswerPage() {
             {data.alternatives.map((alt, i) => (
               <AlternativeCard key={alt.name} product={alt} delay={`${i * 60}ms`} />
             ))}
+          </div>
+        </SectionCard>
+
+        {/* 参考情報（回答の根拠） */}
+        <GroupLabel label="参考情報" delay="450ms" />
+
+        <SectionCard title="回答の根拠" icon={<FileSearch className="h-4 w-4" />} delay="460ms">
+          <div className="space-y-3">
+            <EvidenceRow label="メーカー公式情報" value={data.evidence.maker_official} />
+            <EvidenceRow label="オーナーレビュー" value={data.evidence.owner_reviews} />
+            <EvidenceRow label="YouTubeレビュー" value={data.evidence.youtube_reviews} />
+            <EvidenceRow label="AI総合評価" value={data.evidence.ai_overall} />
           </div>
         </SectionCard>
 
@@ -292,6 +314,36 @@ function AlternativeCard({
       </p>
       <h3 className="mt-0.5 text-sm font-semibold">{product.name}</h3>
       <p className="mt-2 text-sm font-semibold">{product.price}</p>
+    </div>
+  );
+}
+
+function GroupLabel({ label, delay = "0ms" }: { label: string; delay?: string }) {
+  return (
+    <p
+      className="animate-fade-in mb-3 text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground"
+      style={{ animationDelay: delay }}
+    >
+      {label}
+    </p>
+  );
+}
+
+function EvidenceRow({ label, value }: { label: string; value: string }) {
+  const text = value?.trim() ? value : "現在取得できません";
+  const missing = !value?.trim();
+  return (
+    <div className="rounded-xl border border-border/70 bg-background/40 p-4">
+      <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+        {label}
+      </p>
+      <p
+        className={`mt-1.5 text-sm leading-relaxed ${
+          missing ? "text-muted-foreground/70" : "text-foreground/90"
+        }`}
+      >
+        {text}
+      </p>
     </div>
   );
 }
