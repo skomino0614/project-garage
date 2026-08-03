@@ -141,6 +141,9 @@ function AnswerPage() {
           </div>
         </section>
 
+        {/* AIの意見 */}
+        <GroupLabel label="AIの意見" delay="180ms" />
+
         {/* あなたにおすすめする理由 */}
         <SectionCard
           title="あなたにおすすめする理由"
