@@ -359,3 +359,21 @@ function EvidenceRow({ label, value }: { label: string; value: string }) {
     </div>
   );
 }
+
+function SourceTile({ source }: { source: SourceCard }) {
+  const ready = source.status === "ready";
+  return (
+    <div className="rounded-xl border border-border/70 bg-background/40 p-4">
+      <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+        {source.label}
+      </p>
+      <p
+        className={`mt-1.5 text-sm leading-relaxed ${
+          ready ? "text-foreground/90" : "text-muted-foreground/70"
+        }`}
+      >
+        {ready ? source.content : source.placeholder}
+      </p>
+    </div>
+  );
+}
