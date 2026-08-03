@@ -8,9 +8,12 @@ import {
   Sparkles,
   Camera,
   FileSearch,
+  Database,
 } from "lucide-react";
 import { GarageNav } from "../components/GarageNav";
 import type { AnswerResult } from "@/lib/answer.functions";
+import { buildSourceCards, type SourceCard } from "@/lib/sources";
+
 
 type Search = { q?: string; maker?: string; model?: string; year?: string };
 
@@ -216,8 +219,16 @@ function AnswerPage() {
           </div>
         </SectionCard>
 
-        {/* 参考情報（回答の根拠） */}
+        {/* 参考情報（情報ソース + 回答の根拠） */}
         <GroupLabel label="参考情報" delay="450ms" />
+
+        <SectionCard title="情報ソース" icon={<Database className="h-4 w-4" />} delay="455ms">
+          <div className="grid gap-3 sm:grid-cols-3">
+            {buildSourceCards(data).map((s) => (
+              <SourceTile key={s.id} source={s} />
+            ))}
+          </div>
+        </SectionCard>
 
         <SectionCard title="回答の根拠" icon={<FileSearch className="h-4 w-4" />} delay="460ms">
           <div className="space-y-3">
@@ -227,6 +238,7 @@ function AnswerPage() {
             <EvidenceRow label="AI総合評価" value={data.evidence.ai_overall} />
           </div>
         </SectionCard>
+
 
         {/* 次のステップ */}
         <div
@@ -343,6 +355,24 @@ function EvidenceRow({ label, value }: { label: string; value: string }) {
         }`}
       >
         {text}
+      </p>
+    </div>
+  );
+}
+
+function SourceTile({ source }: { source: SourceCard }) {
+  const ready = source.status === "ready";
+  return (
+    <div className="rounded-xl border border-border/70 bg-background/40 p-4">
+      <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+        {source.label}
+      </p>
+      <p
+        className={`mt-1.5 text-sm leading-relaxed ${
+          ready ? "text-foreground/90" : "text-muted-foreground/70"
+        }`}
+      >
+        {ready ? source.content : source.placeholder}
       </p>
     </div>
   );
