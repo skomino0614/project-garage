@@ -7,6 +7,7 @@ import {
   AlertTriangle,
   Sparkles,
   Camera,
+  FileSearch,
 } from "lucide-react";
 import { GarageNav } from "../components/GarageNav";
 import type { AnswerResult } from "@/lib/answer.functions";
