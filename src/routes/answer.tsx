@@ -216,8 +216,16 @@ function AnswerPage() {
           </div>
         </SectionCard>
 
-        {/* 参考情報（回答の根拠） */}
+        {/* 参考情報（情報ソース + 回答の根拠） */}
         <GroupLabel label="参考情報" delay="450ms" />
+
+        <SectionCard title="情報ソース" icon={<Database className="h-4 w-4" />} delay="455ms">
+          <div className="grid gap-3 sm:grid-cols-3">
+            {buildSourceCards(data).map((s) => (
+              <SourceTile key={s.id} source={s} />
+            ))}
+          </div>
+        </SectionCard>
 
         <SectionCard title="回答の根拠" icon={<FileSearch className="h-4 w-4" />} delay="460ms">
           <div className="space-y-3">
@@ -227,6 +235,7 @@ function AnswerPage() {
             <EvidenceRow label="AI総合評価" value={data.evidence.ai_overall} />
           </div>
         </SectionCard>
+
 
         {/* 次のステップ */}
         <div
