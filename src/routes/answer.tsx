@@ -50,6 +50,12 @@ const FALLBACK: AnswerResult = {
     { name: "DRV-MN940", brand: "KENWOOD", price: "¥55,000 前後", image_query: "KENWOOD DRV-MN940" },
     { name: "VREC-DH300D", brand: "Pioneer", price: "¥28,000 前後", image_query: "Pioneer VREC-DH300D" },
   ],
+  evidence: {
+    maker_official: "",
+    owner_reviews: "",
+    youtube_reviews: "",
+    ai_overall: "",
+  },
 };
 
 function imageUrl(query: string) {
