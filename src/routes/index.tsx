@@ -40,6 +40,10 @@ function Home() {
     navigate({ to: "/ask", search: { maker, model, year: series, q: q || undefined } as never });
   };
 
+  const goConsult = () => {
+    navigate({ to: "/consult", search: { maker, model, series } });
+  };
+
   const fillChip = (chip: string) => {
     setQuery(`90系ヴォクシーにおすすめの${chip}は？`);
   };
@@ -174,7 +178,7 @@ function Home() {
 
           {/* Primary CTA */}
           <button
-            onClick={submit}
+            onClick={goConsult}
             className="animate-fade-in glow-blue group mt-6 inline-flex items-center justify-center gap-2 rounded-full bg-primary px-8 py-3.5 text-sm font-semibold text-primary-foreground transition-all hover:bg-primary/90"
           >
             この車で相談する

@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SelectRouteImport } from './routes/select'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as ConsultRouteImport } from './routes/consult'
 import { Route as AskRouteImport } from './routes/ask'
 import { Route as AnswerRouteImport } from './routes/answer'
 import { Route as IndexRouteImport } from './routes/index'
@@ -24,6 +25,11 @@ const SelectRoute = SelectRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ConsultRoute = ConsultRouteImport.update({
+  id: '/consult',
+  path: '/consult',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AskRoute = AskRouteImport.update({
@@ -51,6 +57,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/answer': typeof AnswerRoute
   '/ask': typeof AskRoute
+  '/consult': typeof ConsultRoute
   '/login': typeof LoginRoute
   '/select': typeof SelectRoute
   '/auth/callback': typeof AuthCallbackRoute
@@ -59,6 +66,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/answer': typeof AnswerRoute
   '/ask': typeof AskRoute
+  '/consult': typeof ConsultRoute
   '/login': typeof LoginRoute
   '/select': typeof SelectRoute
   '/auth/callback': typeof AuthCallbackRoute
@@ -68,20 +76,36 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/answer': typeof AnswerRoute
   '/ask': typeof AskRoute
+  '/consult': typeof ConsultRoute
   '/login': typeof LoginRoute
   '/select': typeof SelectRoute
   '/auth/callback': typeof AuthCallbackRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/answer' | '/ask' | '/login' | '/select' | '/auth/callback'
+  fullPaths:
+    | '/'
+    | '/answer'
+    | '/ask'
+    | '/consult'
+    | '/login'
+    | '/select'
+    | '/auth/callback'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/answer' | '/ask' | '/login' | '/select' | '/auth/callback'
+  to:
+    | '/'
+    | '/answer'
+    | '/ask'
+    | '/consult'
+    | '/login'
+    | '/select'
+    | '/auth/callback'
   id:
     | '__root__'
     | '/'
     | '/answer'
     | '/ask'
+    | '/consult'
     | '/login'
     | '/select'
     | '/auth/callback'
@@ -91,6 +115,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AnswerRoute: typeof AnswerRoute
   AskRoute: typeof AskRoute
+  ConsultRoute: typeof ConsultRoute
   LoginRoute: typeof LoginRoute
   SelectRoute: typeof SelectRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
@@ -110,6 +135,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/consult': {
+      id: '/consult'
+      path: '/consult'
+      fullPath: '/consult'
+      preLoaderRoute: typeof ConsultRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/ask': {
@@ -147,6 +179,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AnswerRoute: AnswerRoute,
   AskRoute: AskRoute,
+  ConsultRoute: ConsultRoute,
   LoginRoute: LoginRoute,
   SelectRoute: SelectRoute,
   AuthCallbackRoute: AuthCallbackRoute,
