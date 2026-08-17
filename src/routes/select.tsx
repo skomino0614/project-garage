@@ -1,8 +1,10 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { ArrowRight, Car } from "lucide-react";
 import { GarageNav } from "../components/GarageNav";
 import { MAKERS, MODELS, YEARS } from "@/lib/car-data";
+import { listCarMasters } from "@/lib/car-masters.functions";
 
 export const Route = createFileRoute("/select")({
   head: () => ({ meta: [{ title: "車を選ぶ — Project Garage" }] }),
@@ -20,12 +22,40 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 
 function SelectCar() {
   const navigate = useNavigate();
+  const fetchCarMasters = useServerFn(listCarMasters);
   const [maker, setMaker] = useState("");
   const [model, setModel] = useState("");
   const [year, setYear] = useState("");
+  const [makers, setMakers] = useState<string[]>([]);
+  const [modelsByMaker, setModelsByMaker] = useState<Record<string, string[]>>({});
+  const [isLoadingCarData, setIsLoadingCarData] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    fetchCarMasters()
+      .then((data) => {
+        if (cancelled) return;
+        setMakers(data.makers);
+        setModelsByMaker(data.modelsByMaker);
+      })
+      .catch((err) => {
+        console.error(err);
+        if (cancelled) return;
+        setMakers(MAKERS);
+        setModelsByMaker(MODELS);
+      })
+      .finally(() => {
+        if (!cancelled) setIsLoadingCarData(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [fetchCarMasters]);
 
   const canContinue = maker && model && year;
-  const models = maker ? MODELS[maker] ?? [] : [];
+  const models = maker ? modelsByMaker[maker] ?? [] : [];
 
   const inputCls =
     "w-full appearance-none rounded-xl border border-border bg-input px-4 py-3.5 text-sm text-foreground outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/30";
@@ -46,16 +76,41 @@ function SelectCar() {
 
         <div className="animate-fade-in mt-10 space-y-5 rounded-2xl border border-border bg-card/40 p-6 backdrop-blur">
           <Field label="メーカー">
-            <select className={inputCls} value={maker} onChange={(e) => { setMaker(e.target.value); setModel(""); }}>
-              <option value="">選択してください</option>
-              {MAKERS.map((m) => <option key={m} value={m}>{m}</option>)}
+            <select
+              className={inputCls}
+              value={maker}
+              disabled={isLoadingCarData}
+              onChange={(e) => {
+                setMaker(e.target.value);
+                setModel("");
+              }}
+            >
+              <option value="">{isLoadingCarData ? "読み込み中..." : "選択してください"}</option>
+              {!isLoadingCarData &&
+                makers.map((m) => (
+                  <option key={m} value={m}>
+                    {m}
+                  </option>
+                ))}
             </select>
           </Field>
 
           <Field label="モデル">
-            <select className={inputCls} value={model} onChange={(e) => setModel(e.target.value)} disabled={!maker}>
-              <option value="">{maker ? "選択してください" : "先にメーカーを選択"}</option>
-              {models.map((m) => <option key={m} value={m}>{m}</option>)}
+            <select
+              className={inputCls}
+              value={model}
+              onChange={(e) => setModel(e.target.value)}
+              disabled={!maker || isLoadingCarData}
+            >
+              <option value="">
+                {isLoadingCarData ? "読み込み中..." : maker ? "選択してください" : "先にメーカーを選択"}
+              </option>
+              {!isLoadingCarData &&
+                models.map((m) => (
+                  <option key={m} value={m}>
+                    {m}
+                  </option>
+                ))}
             </select>
           </Field>
 
