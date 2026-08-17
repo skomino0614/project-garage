@@ -1,8 +1,10 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { ArrowRight, Zap, Search } from "lucide-react";
 import { GarageNav } from "../components/GarageNav";
 import { MAKERS, MODELS } from "@/lib/car-data";
+import { listCarMasters } from "@/lib/car-masters.functions";
 
 export const Route = createFileRoute("/")({
   component: Home,
@@ -25,12 +27,40 @@ function Field({ label, children }: { label: string; children: ReactNode }) {
 
 function Home() {
   const navigate = useNavigate();
+  const fetchCarMasters = useServerFn(listCarMasters);
   const [maker, setMaker] = useState("Toyota");
   const [model, setModel] = useState("Voxy");
   const [series, setSeries] = useState("90 Series");
   const [query, setQuery] = useState("");
+  const [makers, setMakers] = useState<string[]>([]);
+  const [modelsByMaker, setModelsByMaker] = useState<Record<string, string[]>>({});
+  const [isLoadingCarData, setIsLoadingCarData] = useState(true);
 
-  const models = maker ? MODELS[maker] ?? [] : [];
+  useEffect(() => {
+    let cancelled = false;
+
+    fetchCarMasters()
+      .then((data) => {
+        if (cancelled) return;
+        setMakers(data.makers);
+        setModelsByMaker(data.modelsByMaker);
+      })
+      .catch((err) => {
+        console.error(err);
+        if (cancelled) return;
+        setMakers(MAKERS);
+        setModelsByMaker(MODELS);
+      })
+      .finally(() => {
+        if (!cancelled) setIsLoadingCarData(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [fetchCarMasters]);
+
+  const models = maker ? modelsByMaker[maker] ?? [] : [];
 
   const selectCls =
     "w-full appearance-none rounded-xl border border-border bg-input px-2.5 py-2 text-sm text-foreground outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/30";
@@ -80,17 +110,22 @@ function Home() {
                   <select
                     className={selectCls}
                     value={maker}
+                    disabled={isLoadingCarData}
                     onChange={(e) => {
                       const next = e.target.value;
                       setMaker(next);
-                      setModel(MODELS[next]?.[0] ?? "");
+                      setModel(modelsByMaker[next]?.[0] ?? "");
                     }}
                   >
-                    {MAKERS.map((m) => (
-                      <option key={m} value={m}>
-                        {m}
-                      </option>
-                    ))}
+                    {isLoadingCarData ? (
+                      <option value={maker}>{maker}</option>
+                    ) : (
+                      makers.map((m) => (
+                        <option key={m} value={m}>
+                          {m}
+                        </option>
+                      ))
+                    )}
                   </select>
                 </Field>
 
@@ -99,13 +134,17 @@ function Home() {
                     className={selectCls}
                     value={model}
                     onChange={(e) => setModel(e.target.value)}
-                    disabled={!maker}
+                    disabled={!maker || isLoadingCarData}
                   >
-                    {models.map((m) => (
-                      <option key={m} value={m}>
-                        {m}
-                      </option>
-                    ))}
+                    {isLoadingCarData ? (
+                      <option value={model}>{model}</option>
+                    ) : (
+                      models.map((m) => (
+                        <option key={m} value={m}>
+                          {m}
+                        </option>
+                      ))
+                    )}
                   </select>
                 </Field>
 
