@@ -118,13 +118,21 @@ function mergePriority(a: PriorityLevel, b: PriorityLevel): PriorityLevel {
   return priorityRank(a) >= priorityRank(b) ? a : b;
 }
 
+function coalesceBudgetYen(primary: number | null, fallback: number | null): number | null {
+  return primary != null && primary > 0 ? primary : fallback;
+}
+
+function coalesceText(primary: string | null, fallback: string | null): string | null {
+  return primary?.trim() ? primary : fallback;
+}
+
 export function mergeConsultSlots(primary: ConsultSlots, fallback: ConsultSlots): ConsultSlots {
   return {
-    budgetMaxYen: primary.budgetMaxYen ?? fallback.budgetMaxYen,
-    budgetNote: primary.budgetNote ?? fallback.budgetNote,
-    category: primary.category ?? fallback.category,
-    usage: primary.usage ?? fallback.usage,
-    stylePreference: primary.stylePreference ?? fallback.stylePreference,
+    budgetMaxYen: coalesceBudgetYen(primary.budgetMaxYen, fallback.budgetMaxYen),
+    budgetNote: coalesceText(primary.budgetNote, fallback.budgetNote),
+    category: coalesceText(primary.category, fallback.category),
+    usage: coalesceText(primary.usage, fallback.usage),
+    stylePreference: coalesceText(primary.stylePreference, fallback.stylePreference),
     priorities: {
       appearance: mergePriority(primary.priorities.appearance, fallback.priorities.appearance),
       comfort: mergePriority(primary.priorities.comfort, fallback.priorities.comfort),
