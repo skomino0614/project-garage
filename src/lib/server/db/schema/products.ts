@@ -1,0 +1,40 @@
+import {
+  boolean,
+  index,
+  integer,
+  jsonb,
+  pgTable,
+  text,
+  timestamp,
+  uuid,
+} from "drizzle-orm/pg-core";
+
+export const products = pgTable(
+  "products",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    category: text("category").notNull(),
+    name: text("name").notNull(),
+    brand: text("brand").notNull(),
+    description: text("description"),
+    priceMinYen: integer("price_min_yen").notNull(),
+    priceMaxYen: integer("price_max_yen").notNull(),
+    imageUrl: text("image_url"),
+    productUrl: text("product_url"),
+    purchaseUrl: text("purchase_url"),
+    appearance: text("appearance").notNull().default("unknown"),
+    comfort: text("comfort").notNull().default("unknown"),
+    practicality: text("practicality").notNull().default("unknown"),
+    resale: text("resale").notNull().default("unknown"),
+    style: text("style").notNull(),
+    tags: jsonb("tags").$type<string[]>().notNull().default([]),
+    isActive: boolean("is_active").notNull().default(true),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index("products_category_idx").on(table.category),
+    index("products_is_active_idx").on(table.isActive),
+    index("products_price_min_yen_idx").on(table.priceMinYen),
+  ],
+);
