@@ -110,6 +110,42 @@ function buildDirection(slots: ConsultSlots): string | null {
   return null;
 }
 
+function priorityRank(level: PriorityLevel): number {
+  return { high: 3, medium: 2, low: 1, unknown: 0 }[level];
+}
+
+function mergePriority(a: PriorityLevel, b: PriorityLevel): PriorityLevel {
+  return priorityRank(a) >= priorityRank(b) ? a : b;
+}
+
+export function mergeConsultSlots(primary: ConsultSlots, fallback: ConsultSlots): ConsultSlots {
+  return {
+    budgetMaxYen: primary.budgetMaxYen ?? fallback.budgetMaxYen,
+    budgetNote: primary.budgetNote ?? fallback.budgetNote,
+    category: primary.category ?? fallback.category,
+    usage: primary.usage ?? fallback.usage,
+    stylePreference: primary.stylePreference ?? fallback.stylePreference,
+    priorities: {
+      appearance: mergePriority(primary.priorities.appearance, fallback.priorities.appearance),
+      comfort: mergePriority(primary.priorities.comfort, fallback.priorities.comfort),
+      practicality: mergePriority(primary.priorities.practicality, fallback.priorities.practicality),
+      resale: mergePriority(primary.priorities.resale, fallback.priorities.resale),
+    },
+  };
+}
+
+/** Merge AI slots with message-inferred slots; safe when API omits slots. */
+export function resolveConsultSlots(
+  aiSlots: ConsultSlots | undefined | null,
+  messages: ConsultMessage[],
+): ConsultSlots {
+  const inferred = inferSlotsFromMessages(messages);
+  if (!aiSlots?.priorities) {
+    return inferred;
+  }
+  return mergeConsultSlots(aiSlots, inferred);
+}
+
 export function buildConsultationSummary(
   maker: string,
   model: string,

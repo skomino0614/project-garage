@@ -8,7 +8,7 @@ import {
   buildConsultationSummary,
   formatBudgetLabel,
   hasSummaryDetails,
-  inferSlotsFromMessages,
+  resolveConsultSlots,
   summaryPriorityLabels,
 } from "@/lib/consult/build-summary";
 import { formatConsultContent } from "@/lib/consult/format-content";
@@ -107,7 +107,14 @@ function ConsultPage() {
           content: formatConsultContent(result.content),
         },
       ]);
-      setSummary(buildConsultationSummary(maker, model, series, result.slots));
+      setSummary(
+        buildConsultationSummary(
+          maker,
+          model,
+          series,
+          resolveConsultSlots(result.slots, historyForApi),
+        ),
+      );
     } catch (error) {
       if (isOpenAiNotConfigured(error)) {
         console.warn("[consult] OpenAI not configured, using mock fallback");
@@ -125,7 +132,7 @@ function ConsultPage() {
             maker,
             model,
             series,
-            inferSlotsFromMessages(historyForApi),
+            resolveConsultSlots(undefined, historyForApi),
           ),
         );
       } else {
@@ -238,7 +245,7 @@ function ConsultPage() {
       </main>
 
       <div className="fixed inset-x-0 bottom-0 z-30 border-t border-border/60 bg-background/85 backdrop-blur-xl">
-        <div className="mx-auto max-w-2xl px-5 py-4">
+        <div className="mx-auto max-h-[min(70vh,520px)] max-w-2xl overflow-y-auto px-5 py-4">
           {errorMsg && (
             <p className="mb-3 text-sm text-destructive">{errorMsg}</p>
           )}
