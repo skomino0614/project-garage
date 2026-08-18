@@ -1,7 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { ArrowUp, ChevronRight } from "lucide-react";
 import { GarageNav } from "../components/GarageNav";
+import { consultChat } from "@/lib/consult.functions";
 import {
   categoryPrompt,
   formatVehicleLabel,
@@ -34,12 +36,19 @@ type ChatMessage = {
   content: string;
 };
 
+function isOpenAiNotConfigured(error: unknown): boolean {
+  const msg = error instanceof Error ? error.message : String(error);
+  return msg.includes("OPENAI_NOT_CONFIGURED") || msg.includes("Missing OPENAI_API_KEY");
+}
+
 function ConsultPage() {
   const { maker, model, series } = Route.useSearch();
   const vehicleLabel = formatVehicleLabel(maker, model, series);
+  const consultChatFn = useServerFn(consultChat);
 
   const [input, setInput] = useState("");
   const [isReplying, setIsReplying] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: "welcome",
@@ -55,7 +64,7 @@ function ConsultPage() {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages, isReplying]);
 
-  const sendMessage = (text: string) => {
+  const sendMessage = async (text: string) => {
     const trimmed = text.trim();
     if (!trimmed || isReplying) return;
 
@@ -65,18 +74,40 @@ function ConsultPage() {
       content: trimmed,
     };
 
+    const historyForApi = [...messages, userMessage].map(({ role, content }) => ({ role, content }));
+
     setMessages((prev) => [...prev, userMessage]);
     setInput("");
     setIsReplying(true);
+    setErrorMsg(null);
 
-    window.setTimeout(() => {
-      const reply = generateMockConsultReply(trimmed, maker, model, series);
+    try {
+      const result = await consultChatFn({
+        data: {
+          vehicle: { maker, model, series },
+          messages: historyForApi,
+        },
+      });
+
       setMessages((prev) => [
         ...prev,
-        { id: `assistant-${Date.now()}`, role: "assistant", content: reply },
+        { id: `assistant-${Date.now()}`, role: "assistant", content: result.content },
       ]);
+    } catch (error) {
+      if (isOpenAiNotConfigured(error)) {
+        console.warn("[consult] OpenAI not configured, using mock fallback");
+        const reply = generateMockConsultReply(trimmed, maker, model, series);
+        setMessages((prev) => [
+          ...prev,
+          { id: `assistant-${Date.now()}`, role: "assistant", content: reply },
+        ]);
+      } else {
+        console.error("[consult] Failed to generate reply");
+        setErrorMsg("回答の生成に失敗しました。もう一度お試しください。");
+      }
+    } finally {
       setIsReplying(false);
-    }, 600);
+    }
   };
 
   const handleSubmit = () => sendMessage(input);
@@ -177,6 +208,9 @@ function ConsultPage() {
 
       <div className="fixed inset-x-0 bottom-0 z-30 border-t border-border/60 bg-background/85 backdrop-blur-xl">
         <div className="mx-auto max-w-2xl px-5 py-4">
+          {errorMsg && (
+            <p className="mb-3 text-sm text-destructive">{errorMsg}</p>
+          )}
           <div className="mb-3 flex flex-wrap gap-2">
             {CHIPS.map((chip) => (
               <button
