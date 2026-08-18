@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { ArrowUp, ChevronRight } from "lucide-react";
 import { GarageNav } from "../components/GarageNav";
 import { consultChat } from "@/lib/consult.functions";
+import { formatConsultContent } from "@/lib/consult/format-content";
 import {
   categoryPrompt,
   formatVehicleLabel,
@@ -91,7 +92,11 @@ function ConsultPage() {
 
       setMessages((prev) => [
         ...prev,
-        { id: `assistant-${Date.now()}`, role: "assistant", content: result.content },
+        {
+          id: `assistant-${Date.now()}`,
+          role: "assistant",
+          content: formatConsultContent(result.content),
+        },
       ]);
     } catch (error) {
       if (isOpenAiNotConfigured(error)) {
@@ -99,7 +104,11 @@ function ConsultPage() {
         const reply = generateMockConsultReply(trimmed, maker, model, series);
         setMessages((prev) => [
           ...prev,
-          { id: `assistant-${Date.now()}`, role: "assistant", content: reply },
+          {
+            id: `assistant-${Date.now()}`,
+            role: "assistant",
+            content: formatConsultContent(reply),
+          },
         ]);
       } else {
         console.error("[consult] Failed to generate reply");
@@ -167,7 +176,9 @@ function ConsultPage() {
                     : "rounded-bl-md border border-border/80 bg-card/60 text-foreground/95 backdrop-blur"
                 }`}
               >
-                {message.content}
+                {message.role === "assistant"
+                  ? formatConsultContent(message.content)
+                  : message.content}
               </div>
             </div>
           ))}

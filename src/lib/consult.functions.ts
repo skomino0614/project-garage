@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { generateObject } from "ai";
 
 import { ConsultChatInputSchema, ConsultChatOutputSchema } from "./consult/schemas";
+import { formatConsultContent } from "./consult/format-content";
 import { buildConsultSystemPrompt, buildConsultUserPrompt } from "./consult/prompts/system";
 import type { ConsultChatResponse } from "./consult/types";
 
@@ -23,5 +24,10 @@ export const consultChat = createServerFn({ method: "POST" })
       prompt: buildConsultUserPrompt(data.messages),
     });
 
-    return object;
+    return {
+      content: formatConsultContent(object.content),
+      phase: object.phase,
+      followUpQuestion: object.phase === "clarify" ? object.followUpQuestion : null,
+      slots: object.slots,
+    };
   });
