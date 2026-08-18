@@ -38,3 +38,16 @@ export type ConsultChatResponse = {
   followUpQuestion: string | null;
   slots: ConsultSlots;
 };
+
+export type ConsultationSummary = {
+  vehicle: VehicleContext;
+  budget: {
+    maxYen: number | null;
+    note: string | null;
+  };
+  category: string | null;
+  usage: string | null;
+  stylePreference: string | null;
+  priorities: ConsultSlots["priorities"];
+  direction: string | null;
+};

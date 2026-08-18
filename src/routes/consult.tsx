@@ -4,7 +4,15 @@ import { useServerFn } from "@tanstack/react-start";
 import { ArrowUp, ChevronRight } from "lucide-react";
 import { GarageNav } from "../components/GarageNav";
 import { consultChat } from "@/lib/consult.functions";
+import {
+  buildConsultationSummary,
+  formatBudgetLabel,
+  hasSummaryDetails,
+  inferSlotsFromMessages,
+  summaryPriorityLabels,
+} from "@/lib/consult/build-summary";
 import { formatConsultContent } from "@/lib/consult/format-content";
+import type { ConsultationSummary } from "@/lib/consult/types";
 import {
   categoryPrompt,
   formatVehicleLabel,
@@ -50,6 +58,7 @@ function ConsultPage() {
   const [input, setInput] = useState("");
   const [isReplying, setIsReplying] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [summary, setSummary] = useState<ConsultationSummary | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: "welcome",
@@ -98,6 +107,7 @@ function ConsultPage() {
           content: formatConsultContent(result.content),
         },
       ]);
+      setSummary(buildConsultationSummary(maker, model, series, result.slots));
     } catch (error) {
       if (isOpenAiNotConfigured(error)) {
         console.warn("[consult] OpenAI not configured, using mock fallback");
@@ -110,6 +120,14 @@ function ConsultPage() {
             content: formatConsultContent(reply),
           },
         ]);
+        setSummary(
+          buildConsultationSummary(
+            maker,
+            model,
+            series,
+            inferSlotsFromMessages(historyForApi),
+          ),
+        );
       } else {
         console.error("[consult] Failed to generate reply");
         setErrorMsg("回答の生成に失敗しました。もう一度お試しください。");
@@ -133,6 +151,8 @@ function ConsultPage() {
   };
 
   const showExamples = messages.length === 1 && !isReplying;
+  const budgetLabel = summary ? formatBudgetLabel(summary) : null;
+  const priorityLabels = summary ? summaryPriorityLabels(summary) : [];
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
@@ -221,6 +241,66 @@ function ConsultPage() {
         <div className="mx-auto max-w-2xl px-5 py-4">
           {errorMsg && (
             <p className="mb-3 text-sm text-destructive">{errorMsg}</p>
+          )}
+          {summary && hasSummaryDetails(summary) && (
+            <div className="animate-fade-in mb-3 rounded-2xl border border-border/80 bg-card/50 p-4 backdrop-blur">
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                あなたのカスタム条件
+              </p>
+              <dl className="mt-3 space-y-2.5 text-sm">
+                <div>
+                  <dt className="text-xs text-muted-foreground">車種</dt>
+                  <dd className="mt-0.5 font-medium text-foreground">
+                    {formatVehicleLabel(summary.vehicle.maker, summary.vehicle.model, summary.vehicle.series)}
+                  </dd>
+                </div>
+                {budgetLabel && (
+                  <div>
+                    <dt className="text-xs text-muted-foreground">予算</dt>
+                    <dd className="mt-0.5 text-foreground">{budgetLabel}</dd>
+                  </div>
+                )}
+                {summary.category && (
+                  <div>
+                    <dt className="text-xs text-muted-foreground">カテゴリ</dt>
+                    <dd className="mt-0.5 text-foreground">{summary.category}</dd>
+                  </div>
+                )}
+                {summary.usage && (
+                  <div>
+                    <dt className="text-xs text-muted-foreground">用途</dt>
+                    <dd className="mt-0.5 text-foreground">{summary.usage}</dd>
+                  </div>
+                )}
+                {summary.stylePreference && (
+                  <div>
+                    <dt className="text-xs text-muted-foreground">好み</dt>
+                    <dd className="mt-0.5 text-foreground">{summary.stylePreference}</dd>
+                  </div>
+                )}
+                {priorityLabels.length > 0 && (
+                  <div>
+                    <dt className="text-xs text-muted-foreground">重視すること</dt>
+                    <dd className="mt-1 flex flex-wrap gap-1.5">
+                      {priorityLabels.map((label) => (
+                        <span
+                          key={label}
+                          className="rounded-full border border-primary/30 bg-primary/10 px-2.5 py-0.5 text-xs text-foreground"
+                        >
+                          {label}
+                        </span>
+                      ))}
+                    </dd>
+                  </div>
+                )}
+                {summary.direction && (
+                  <div>
+                    <dt className="text-xs text-muted-foreground">方向性</dt>
+                    <dd className="mt-0.5 leading-relaxed text-foreground">{summary.direction}</dd>
+                  </div>
+                )}
+              </dl>
+            </div>
           )}
           <div className="mb-3 flex flex-wrap gap-2">
             {CHIPS.map((chip) => (
