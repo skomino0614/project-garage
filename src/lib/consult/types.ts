@@ -14,7 +14,27 @@ export type ConsultChatRequest = {
   messages: ConsultMessage[];
 };
 
+export type PriorityLevel = "high" | "medium" | "low" | "unknown";
+
+export type ConsultSlots = {
+  budgetMaxYen: number | null;
+  budgetNote: string | null;
+  category: string | null;
+  usage: string | null;
+  stylePreference: string | null;
+  priorities: {
+    appearance: PriorityLevel;
+    comfort: PriorityLevel;
+    practicality: PriorityLevel;
+    resale: PriorityLevel;
+  };
+};
+
+export type ConsultPhase = "clarify" | "advise";
+
 export type ConsultChatResponse = {
   content: string;
-  phase: "advise";
+  phase: ConsultPhase;
+  followUpQuestion: string | null;
+  slots: ConsultSlots;
 };

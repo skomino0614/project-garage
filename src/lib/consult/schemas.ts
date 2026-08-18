@@ -16,7 +16,27 @@ export const ConsultChatInputSchema = z.object({
   messages: z.array(ConsultMessageSchema).min(1).max(50),
 });
 
+export const PriorityLevelSchema = z.enum(["high", "medium", "low", "unknown"]);
+
+export const ConsultPrioritiesSchema = z.object({
+  appearance: PriorityLevelSchema,
+  comfort: PriorityLevelSchema,
+  practicality: PriorityLevelSchema,
+  resale: PriorityLevelSchema,
+});
+
+export const ConsultSlotsSchema = z.object({
+  budgetMaxYen: z.number().nullable(),
+  budgetNote: z.string().nullable(),
+  category: z.string().nullable(),
+  usage: z.string().nullable(),
+  stylePreference: z.string().nullable(),
+  priorities: ConsultPrioritiesSchema,
+});
+
 export const ConsultChatOutputSchema = z.object({
   content: z.string().min(1),
-  phase: z.literal("advise"),
+  phase: z.enum(["clarify", "advise"]),
+  followUpQuestion: z.string().nullable(),
+  slots: ConsultSlotsSchema,
 });
