@@ -4,6 +4,10 @@ import { useServerFn } from "@tanstack/react-start";
 import { ArrowUp, ChevronRight } from "lucide-react";
 import { GarageNav } from "../components/GarageNav";
 import { consultChat } from "@/lib/consult.functions";
+import { recommendProductsForConsultation } from "@/lib/product/consult-recommend.functions";
+import { isRecommendationRequest } from "@/lib/product/recommend-display";
+import type { ProductRecommendationDisplayItem } from "@/lib/product/recommend-schemas";
+import { ProductRecommendationSection } from "../components/ProductRecommendationSection";
 import {
   buildConsultationSummary,
   formatBudgetLabel,
@@ -39,6 +43,19 @@ const EXAMPLE_QUESTIONS = [
   "純正っぽくカスタムしたい",
 ];
 
+type RecommendationState = {
+  loading: boolean;
+  items: ProductRecommendationDisplayItem[];
+  error: boolean;
+  requestKey: string | null;
+};
+
+const EMPTY_RECOMMENDATIONS: RecommendationState = {
+  loading: false,
+  items: [],
+  error: false,
+  requestKey: null,
+};
 const FOOTER_INSET_FALLBACK_PX = 160;
 const SCROLL_NEAR_BOTTOM_PX = 120;
 const FOOTER_SCROLL_BUFFER_PX = 24;
@@ -96,11 +113,13 @@ function ConsultPage() {
   const { maker, model, series } = Route.useSearch();
   const vehicleLabel = formatVehicleLabel(maker, model, series);
   const consultChatFn = useServerFn(consultChat);
+  const recommendProductsFn = useServerFn(recommendProductsForConsultation);
 
   const [input, setInput] = useState("");
   const [isReplying, setIsReplying] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [summary, setSummary] = useState<ConsultationSummary | null>(null);
+  const [recommendations, setRecommendations] = useState<RecommendationState>(EMPTY_RECOMMENDATIONS);
   const [footerInset, setFooterInset] = useState(FOOTER_INSET_FALLBACK_PX);
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
@@ -143,7 +162,64 @@ function ConsultPage() {
       viewport?.removeEventListener("resize", onViewportChange);
       viewport?.removeEventListener("scroll", onViewportChange);
     };
-  }, [syncFooterInset, showSummary, errorMsg, isReplying, input]);
+  }, [syncFooterInset, showSummary, errorMsg, isReplying, input, recommendations.loading, recommendations.items.length]);
+
+  const fetchRecommendations = useCallback(
+    async (currentSummary: ConsultationSummary, userText: string) => {
+      if (!currentSummary.category?.trim() || !isRecommendationRequest(userText)) {
+        setRecommendations(EMPTY_RECOMMENDATIONS);
+        return;
+      }
+
+      const requestKey = `${Date.now()}-${userText}`;
+      setRecommendations({
+        loading: true,
+        items: [],
+        error: false,
+        requestKey,
+      });
+      pendingAutoScrollRef.current = true;
+
+      try {
+        const result = await recommendProductsFn({
+          data: {
+            consultation: {
+              vehicle: currentSummary.vehicle,
+              budget: currentSummary.budget,
+              category: currentSummary.category,
+              usage: currentSummary.usage,
+              stylePreference: currentSummary.stylePreference,
+              priorities: currentSummary.priorities,
+              direction: currentSummary.direction,
+            },
+          },
+        });
+
+        setRecommendations((prev) => {
+          if (prev.requestKey !== requestKey) return prev;
+          return {
+            loading: false,
+            items: result.items,
+            error: false,
+            requestKey,
+          };
+        });
+        pendingAutoScrollRef.current = true;
+      } catch (error) {
+        console.error("[consult] recommendation request failed:", error);
+        setRecommendations((prev) => {
+          if (prev.requestKey !== requestKey) return prev;
+          return {
+            loading: false,
+            items: [],
+            error: true,
+            requestKey,
+          };
+        });
+      }
+    },
+    [recommendProductsFn],
+  );
 
   const scrollToLatest = useCallback(() => {
     const anchor = messagesEndRef.current;
@@ -162,7 +238,7 @@ function ConsultPage() {
     requestAnimationFrame(() => {
       requestAnimationFrame(scrollToLatest);
     });
-  }, [messages, isReplying, footerInset, scrollToLatest]);
+  }, [messages, isReplying, footerInset, recommendations.loading, recommendations.items.length, scrollToLatest]);
 
   useEffect(() => {
     const scrollEl = scrollRef.current;
@@ -214,14 +290,14 @@ function ConsultPage() {
           content: formatConsultContent(result.content),
         },
       ]);
-      setSummary(
-        buildConsultationSummary(
-          maker,
-          model,
-          series,
-          resolveConsultSlots(result.slots, historyForApi),
-        ),
+      const newSummary = buildConsultationSummary(
+        maker,
+        model,
+        series,
+        resolveConsultSlots(result.slots, historyForApi),
       );
+      setSummary(newSummary);
+      void fetchRecommendations(newSummary, trimmed);
     } catch (error) {
       if (isOpenAiNotConfigured(error)) {
         console.warn("[consult] OpenAI not configured, using mock fallback");
@@ -235,14 +311,14 @@ function ConsultPage() {
             content: formatConsultContent(reply),
           },
         ]);
-        setSummary(
-          buildConsultationSummary(
-            maker,
-            model,
-            series,
-            resolveConsultSlots(undefined, historyForApi),
-          ),
+        const newSummary = buildConsultationSummary(
+          maker,
+          model,
+          series,
+          resolveConsultSlots(undefined, historyForApi),
         );
+        setSummary(newSummary);
+        void fetchRecommendations(newSummary, trimmed);
       } else {
         console.error("[consult] Failed to generate reply");
         setErrorMsg("回答の生成に失敗しました。もう一度お試しください。");
@@ -265,7 +341,10 @@ function ConsultPage() {
     inputRef.current?.focus();
   };
 
-  const showExamples = messages.length === 1 && !isReplying;
+  const showRecommendations =
+    Boolean(summary?.category) &&
+    (recommendations.loading || recommendations.items.length > 0);
+  const showExamples = messages.length === 1 && !isReplying && !showRecommendations;
   const budgetLabel = summary ? formatBudgetLabel(summary) : null;
   const priorityLabels = summary ? summaryPriorityLabels(summary) : [];
 
@@ -350,6 +429,14 @@ function ConsultPage() {
                 </div>
               </div>
             )}
+
+            {showRecommendations ? (
+              <ProductRecommendationSection
+                items={recommendations.items}
+                loading={recommendations.loading}
+              />
+            ) : null}
+
             <div
               ref={messagesEndRef}
               aria-hidden
