@@ -1,10 +1,19 @@
+import { generateObject } from "ai";
+
 import type { ProductMatchResult } from "./match-types";
+import {
+  buildRecommendSystemPrompt,
+  buildRecommendUserPrompt,
+} from "./prompts/recommend";
 import type {
   AiRecommendationItem,
   ConsultationForRecommendation,
   ProductRecommendation,
   ProductRecommendationCandidate,
+  RecommendProductReasonsInput,
+  RecommendProductReasonsOutput,
 } from "./recommend-schemas";
+import { AiRecommendationOutputSchema } from "./recommend-schemas";
 
 const UNKNOWN_COMPATIBILITY_CAUTION =
   "車種適合情報が登録されていないため、購入前に適合確認が必要です。";
@@ -144,4 +153,42 @@ export function resolveRecommendProductReasons(
   }
 
   return sanitizeAiRecommendations(aiItems, input.candidates, input.consultation);
+}
+
+export async function generateProductRecommendationReasons(
+  input: RecommendProductReasonsInput,
+): Promise<RecommendProductReasonsOutput> {
+  if (input.candidates.length === 0) {
+    return { recommendations: [], source: "fallback" };
+  }
+
+  if (!process.env.OPENAI_API_KEY) {
+    return {
+      recommendations: buildFallbackRecommendations(input.candidates, input.consultation),
+      source: "fallback",
+    };
+  }
+
+  try {
+    const { getOpenAI } = await import("../openai.server");
+    const openai = getOpenAI();
+
+    const { object } = await generateObject({
+      model: openai("gpt-4o-mini"),
+      schema: AiRecommendationOutputSchema,
+      system: buildRecommendSystemPrompt(),
+      prompt: buildRecommendUserPrompt(input.consultation, input.candidates),
+    });
+
+    return {
+      recommendations: resolveRecommendProductReasons(input, object.recommendations),
+      source: "ai",
+    };
+  } catch (error) {
+    console.error("[generateProductRecommendationReasons] OpenAI request failed:", error);
+    return {
+      recommendations: buildFallbackRecommendations(input.candidates, input.consultation),
+      source: "fallback",
+    };
+  }
 }

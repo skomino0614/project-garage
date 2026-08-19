@@ -94,3 +94,38 @@ export type RecommendProductReasonsInput = z.infer<typeof RecommendProductReason
 export type ProductRecommendation = z.infer<typeof ProductRecommendationSchema>;
 export type RecommendProductReasonsOutput = z.infer<typeof RecommendProductReasonsOutputSchema>;
 export type AiRecommendationItem = z.infer<typeof AiRecommendationItemSchema>;
+
+export const ProductRecommendationDisplayItemSchema = z.object({
+  productId: z.string().uuid(),
+  name: z.string().min(1),
+  brand: z.string().min(1),
+  priceMinYen: z.number().int().nonnegative(),
+  priceMaxYen: z.number().int().nonnegative(),
+  imageUrl: z.string().url().nullable(),
+  productUrl: z.string().url().nullable(),
+  purchaseUrl: z.string().url().nullable(),
+  style: ProductStyleSchema,
+  score: z.number(),
+  vehicleCompatibility: VehicleCompatibilityStatusSchema,
+  compatibilities: z.array(VehicleCompatibilitySchema),
+  reason: z.string().min(1),
+  highlights: z.array(z.string().min(1)).min(1).max(4),
+  caution: z.string().max(300).nullable(),
+});
+
+export const RecommendProductsForConsultationInputSchema = z.object({
+  consultation: ConsultationForRecommendationSchema,
+});
+
+export const RecommendProductsForConsultationOutputSchema = z.object({
+  items: z.array(ProductRecommendationDisplayItemSchema),
+  source: z.enum(["ai", "fallback"]).nullable(),
+});
+
+export type ProductRecommendationDisplayItem = z.infer<typeof ProductRecommendationDisplayItemSchema>;
+export type RecommendProductsForConsultationInput = z.infer<
+  typeof RecommendProductsForConsultationInputSchema
+>;
+export type RecommendProductsForConsultationOutput = z.infer<
+  typeof RecommendProductsForConsultationOutputSchema
+>;
