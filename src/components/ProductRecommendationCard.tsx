@@ -1,4 +1,5 @@
-import { ExternalLink } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import { ChevronRight } from "lucide-react";
 
 import {
   formatCompatibilityLabel,
@@ -6,6 +7,9 @@ import {
   formatProductPrice,
 } from "@/lib/product/recommend-display";
 import type { ProductRecommendationDisplayItem } from "@/lib/product/recommend-schemas";
+import { saveProductRecommendationContext } from "@/lib/product/recommendation-context";
+
+import { ProductImagePlaceholder } from "./ProductImagePlaceholder";
 
 type ProductRecommendationCardProps = {
   item: ProductRecommendationDisplayItem;
@@ -16,7 +20,10 @@ export function ProductRecommendationCard({ item }: ProductRecommendationCardPro
     item.vehicleCompatibility,
     item.compatibilities,
   );
-  const detailUrl = item.productUrl ?? item.purchaseUrl;
+
+  const handleNavigate = () => {
+    saveProductRecommendationContext(item);
+  };
 
   return (
     <article className="flex min-w-0 flex-col overflow-hidden rounded-2xl border border-border/80 bg-card/60 shadow-sm backdrop-blur">
@@ -30,12 +37,7 @@ export function ProductRecommendationCard({ item }: ProductRecommendationCardPro
           />
         </div>
       ) : (
-        <div
-          aria-hidden
-          className="flex aspect-[4/3] w-full items-center justify-center border-b border-border/60 bg-muted/30 px-4 text-center"
-        >
-          <span className="text-xs text-muted-foreground">画像なし（デモ商品）</span>
-        </div>
+        <ProductImagePlaceholder />
       )}
 
       <div className="flex flex-1 flex-col gap-3 p-4">
@@ -85,19 +87,17 @@ export function ProductRecommendationCard({ item }: ProductRecommendationCardPro
           </p>
         ) : null}
 
-        {detailUrl ? (
-          <div className="mt-auto pt-1">
-            <a
-              href={detailUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-background/60 px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:border-primary/40 hover:text-primary"
-            >
-              詳細を見る
-              <ExternalLink className="h-3.5 w-3.5" />
-            </a>
-          </div>
-        ) : null}
+        <div className="mt-auto pt-1">
+          <Link
+            to="/products/$productId"
+            params={{ productId: item.productId }}
+            onClick={handleNavigate}
+            className="inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-background/60 px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:border-primary/40 hover:text-primary"
+          >
+            詳細を見る
+            <ChevronRight className="h-3.5 w-3.5" />
+          </Link>
+        </div>
       </div>
     </article>
   );
