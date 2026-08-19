@@ -120,6 +120,23 @@ export const RecommendProductsForConsultationInputSchema = z.object({
 export const RecommendProductsForConsultationOutputSchema = z.object({
   items: z.array(ProductRecommendationDisplayItemSchema),
   source: z.enum(["ai", "fallback"]).nullable(),
+  /** Temporary pipeline diagnostics (remove after production investigation). */
+  _debug: z
+    .object({
+      stage: z.enum([
+        "no_category",
+        "db_error",
+        "products_zero",
+        "matches_zero",
+        "recommend_zero",
+        "success",
+      ]),
+      productCount: z.number().int().nonnegative().optional(),
+      matchCount: z.number().int().nonnegative().optional(),
+      recommendCount: z.number().int().nonnegative().optional(),
+      error: z.string().optional(),
+    })
+    .optional(),
 });
 
 export type ProductRecommendationDisplayItem = z.infer<typeof ProductRecommendationDisplayItemSchema>;
