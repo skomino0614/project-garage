@@ -56,9 +56,10 @@ const EMPTY_RECOMMENDATIONS: RecommendationState = {
   error: false,
   requestKey: null,
 };
-const FOOTER_INSET_FALLBACK_PX = 160;
+const FOOTER_INSET_FALLBACK_PX = 220;
 const SCROLL_NEAR_BOTTOM_PX = 120;
 const FOOTER_SCROLL_BUFFER_PX = 24;
+const RECOMMENDATION_SCROLL_EXTRA_BUFFER_PX = 32;
 
 type ChatMessage = {
   id: string;
@@ -241,6 +242,20 @@ function ConsultPage() {
   }, [messages, isReplying, footerInset, recommendations.loading, recommendations.items.length, scrollToLatest]);
 
   useEffect(() => {
+    if (recommendations.items.length === 0) return;
+
+    const scrollEl = scrollRef.current;
+    const section = scrollEl?.querySelector<HTMLElement>(
+      '[aria-labelledby="product-recommendations-title"]',
+    );
+    if (!section) return;
+
+    requestAnimationFrame(() => {
+      section.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    });
+  }, [recommendations.items.length]);
+
+  useEffect(() => {
     const scrollEl = scrollRef.current;
     if (!scrollEl) return;
 
@@ -358,6 +373,10 @@ function ConsultPage() {
   const showExamples = messages.length === 1 && !isReplying && !showRecommendations;
   const budgetLabel = summary ? formatBudgetLabel(summary) : null;
   const priorityLabels = summary ? summaryPriorityLabels(summary) : [];
+  const scrollBottomPadding =
+    footerInset +
+    FOOTER_SCROLL_BUFFER_PX +
+    (showRecommendations && recommendations.items.length > 0 ? RECOMMENDATION_SCROLL_EXTRA_BUFFER_PX : 0);
 
   return (
     <div className="flex h-[100dvh] flex-col overflow-hidden bg-background">
@@ -388,7 +407,7 @@ function ConsultPage() {
         <div ref={scrollRef} className="mt-6 min-h-0 flex-1 overflow-y-auto overscroll-contain">
           <div
             className="flex flex-col gap-4"
-            style={{ paddingBottom: footerInset + FOOTER_SCROLL_BUFFER_PX }}
+            style={{ paddingBottom: scrollBottomPadding }}
           >
             {messages.map((message) => (
               <div
@@ -447,6 +466,7 @@ function ConsultPage() {
                 loading={recommendations.loading}
                 error={recommendations.error}
                 empty={recommendationsEmpty}
+                scrollMarginBottom={scrollBottomPadding}
               />
             ) : null}
 
@@ -462,9 +482,9 @@ function ConsultPage() {
 
       <div
         ref={footerRef}
-        className="fixed inset-x-0 bottom-0 z-30 border-t border-border/60 bg-background/85 pb-[max(0px,env(safe-area-inset-bottom))] backdrop-blur-xl"
+        className="pointer-events-none fixed inset-x-0 bottom-0 z-30 border-t border-border/60 bg-background/85 pb-[max(0px,env(safe-area-inset-bottom))] backdrop-blur-xl"
       >
-        <div className="mx-auto max-w-2xl px-5 py-3 sm:py-4">
+        <div className="pointer-events-auto mx-auto max-w-2xl px-5 py-3 sm:py-4">
           {errorMsg && <p className="mb-2 text-sm text-destructive">{errorMsg}</p>}
           {showSummary && summary && (
             <CompactSummaryCard
