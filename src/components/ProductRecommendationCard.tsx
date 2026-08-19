@@ -6,6 +6,10 @@ import {
   formatMatchScore,
   formatProductPrice,
 } from "@/lib/product/recommend-display";
+import {
+  buildProductDetailLinkProps,
+  shouldShowInternalProductDetailLink,
+} from "@/lib/product/product-detail-link";
 import type { ProductRecommendationDisplayItem } from "@/lib/product/recommend-schemas";
 import { saveProductRecommendationContext } from "@/lib/product/recommendation-context";
 
@@ -20,19 +24,29 @@ export function ProductRecommendationCard({ item }: ProductRecommendationCardPro
     item.vehicleCompatibility,
     item.compatibilities,
   );
+  const detailLink = buildProductDetailLinkProps(item.productId);
 
   const handleNavigate = () => {
     saveProductRecommendationContext(item);
   };
 
+  if (!shouldShowInternalProductDetailLink(item)) {
+    return null;
+  }
+
   return (
-    <article className="flex min-w-0 flex-col overflow-hidden rounded-2xl border border-border/80 bg-card/60 shadow-sm backdrop-blur">
+    <Link
+      {...detailLink}
+      onClick={handleNavigate}
+      aria-label={`${item.name} の商品詳細を見る`}
+      className="group flex min-w-0 flex-col overflow-hidden rounded-2xl border border-border/80 bg-card/60 shadow-sm backdrop-blur transition-colors hover:border-primary/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+    >
       {item.imageUrl ? (
         <div className="aspect-[4/3] w-full overflow-hidden border-b border-border/60 bg-muted/20">
           <img
             src={item.imageUrl}
             alt=""
-            className="h-full w-full object-cover"
+            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
             loading="lazy"
           />
         </div>
@@ -40,12 +54,12 @@ export function ProductRecommendationCard({ item }: ProductRecommendationCardPro
         <ProductImagePlaceholder />
       )}
 
-      <div className="flex flex-1 flex-col gap-3 p-4">
+      <div className="flex flex-1 cursor-pointer flex-col gap-3 p-4">
         <div className="space-y-1">
           <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
             {item.brand}
           </p>
-          <h3 className="text-sm font-semibold leading-snug text-foreground sm:text-[15px]">
+          <h3 className="text-sm font-semibold leading-snug text-foreground transition-colors group-hover:text-primary sm:text-[15px]">
             {item.name}
           </h3>
           <p className="text-sm font-medium text-foreground/90">
@@ -88,17 +102,12 @@ export function ProductRecommendationCard({ item }: ProductRecommendationCardPro
         ) : null}
 
         <div className="mt-auto pt-1">
-          <Link
-            to="/products/$productId"
-            params={{ productId: item.productId }}
-            onClick={handleNavigate}
-            className="inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-background/60 px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:border-primary/40 hover:text-primary"
-          >
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-background/60 px-3 py-1.5 text-xs font-medium text-foreground transition-colors group-hover:border-primary/40 group-hover:text-primary">
             詳細を見る
             <ChevronRight className="h-3.5 w-3.5" />
-          </Link>
+          </span>
         </div>
       </div>
-    </article>
+    </Link>
   );
 }
