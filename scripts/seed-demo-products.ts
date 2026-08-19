@@ -1,5 +1,5 @@
 /**
- * Idempotent seed for demo wheel products (Phase 6-5).
+ * Idempotent seed for demo product catalog (Phase 6-5 / 6-6).
  * These are explicitly test/demo catalog entries — not real retail products.
  *
  * Usage:
@@ -124,6 +124,224 @@ const DEMO_PRODUCT_ROWS = [
   },
 ] as const;
 
+/** Stable IDs for demo dashcam products (Phase 6-6). */
+const DEMO_DASHCAM_IDS = {
+  dashcam01: "a2000001-0001-4001-8001-000000000001",
+  dashcam02: "a2000001-0001-4001-8001-000000000002",
+  dashcam03: "a2000001-0001-4001-8001-000000000003",
+  dashcam04: "a2000001-0001-4001-8001-000000000004",
+  dashcam05: "a2000001-0001-4001-8001-000000000005",
+  dashcam06: "a2000001-0001-4001-8001-000000000006",
+} as const;
+
+const DEMO_DASHCAM_ROWS = [
+  {
+    id: DEMO_DASHCAM_IDS.dashcam01,
+    category: "ドラレコ",
+    name: "[DEMO] Test Dashcam Compact",
+    brand: "Project Garage Demo",
+    description: DEMO_NOTE,
+    priceMinYen: 18_000,
+    priceMaxYen: 22_000,
+    appearance: "medium",
+    comfort: "unknown",
+    practicality: "high",
+    resale: "medium",
+    style: "シンプル",
+    tags: ["demo", "test-data", "前後2カメラ", "シンプル"],
+  },
+  {
+    id: DEMO_DASHCAM_IDS.dashcam02,
+    category: "ドラレコ",
+    name: "[DEMO] Test Dashcam Safety Plus",
+    brand: "Project Garage Demo",
+    description: DEMO_NOTE,
+    priceMinYen: 28_000,
+    priceMaxYen: 32_000,
+    appearance: "low",
+    comfort: "unknown",
+    practicality: "high",
+    resale: "high",
+    style: "純正風",
+    tags: ["demo", "test-data", "駐車監視", "純正風"],
+  },
+  {
+    id: DEMO_DASHCAM_IDS.dashcam03,
+    category: "ドラレコ",
+    name: "[DEMO] Test Dashcam Wide View",
+    brand: "Project Garage Demo",
+    description: DEMO_NOTE,
+    priceMinYen: 35_000,
+    priceMaxYen: 42_000,
+    appearance: "medium",
+    comfort: "unknown",
+    practicality: "high",
+    resale: "medium",
+    style: "シンプル",
+    tags: ["demo", "test-data", "広角", "実用性"],
+  },
+  {
+    id: DEMO_DASHCAM_IDS.dashcam04,
+    category: "ドラレコ",
+    name: "[DEMO] Test Dashcam Premium Guard",
+    brand: "Project Garage Demo",
+    description: DEMO_NOTE,
+    priceMinYen: 44_000,
+    priceMaxYen: 48_000,
+    appearance: "high",
+    comfort: "unknown",
+    practicality: "high",
+    resale: "medium",
+    style: "高級感",
+    tags: ["demo", "test-data", "高画質", "高級感"],
+  },
+  {
+    id: DEMO_DASHCAM_IDS.dashcam05,
+    category: "ドラレコ",
+    name: "[DEMO] Test Dashcam Max Budget",
+    brand: "Project Garage Demo",
+    description: DEMO_NOTE,
+    priceMinYen: 55_000,
+    priceMaxYen: 60_000,
+    appearance: "high",
+    comfort: "unknown",
+    practicality: "high",
+    resale: "low",
+    style: "高級感",
+    tags: ["demo", "test-data", "上限付近"],
+  },
+  {
+    id: DEMO_DASHCAM_IDS.dashcam06,
+    category: "ドラレコ",
+    name: "[DEMO] Test Dashcam Over Budget",
+    brand: "Project Garage Demo",
+    description: `${DEMO_NOTE} 予算フィルタ確認用（5万円超）。`,
+    priceMinYen: 68_000,
+    priceMaxYen: 75_000,
+    appearance: "high",
+    comfort: "unknown",
+    practicality: "high",
+    resale: "medium",
+    style: "高級感",
+    tags: ["demo", "test-data", "予算超過確認用"],
+  },
+] as const;
+
+/** Stable IDs for demo tire products (Phase 6-6). */
+const DEMO_TIRE_IDS = {
+  tire01: "a3000001-0001-4001-8001-000000000001",
+  tire02: "a3000001-0001-4001-8001-000000000002",
+  tire03: "a3000001-0001-4001-8001-000000000003",
+  tire04: "a3000001-0001-4001-8001-000000000004",
+  tire05: "a3000001-0001-4001-8001-000000000005",
+  tire06: "a3000001-0001-4001-8001-000000000006",
+} as const;
+
+const DEMO_TIRE_ROWS = [
+  {
+    id: DEMO_TIRE_IDS.tire01,
+    category: "タイヤ",
+    name: "[DEMO] Test Tire Comfort Tour",
+    brand: "Project Garage Demo",
+    description: DEMO_NOTE,
+    priceMinYen: 120_000,
+    priceMaxYen: 140_000,
+    appearance: "medium",
+    comfort: "high",
+    practicality: "high",
+    resale: "medium",
+    style: "シンプル",
+    tags: ["demo", "test-data", "低ノイズ", "乗り心地"],
+  },
+  {
+    id: DEMO_TIRE_IDS.tire02,
+    category: "タイヤ",
+    name: "[DEMO] Test Tire Quiet Line",
+    brand: "Project Garage Demo",
+    description: DEMO_NOTE,
+    priceMinYen: 135_000,
+    priceMaxYen: 155_000,
+    appearance: "medium",
+    comfort: "high",
+    practicality: "medium",
+    resale: "medium",
+    style: "純正風",
+    tags: ["demo", "test-data", "静音", "純正風"],
+  },
+  {
+    id: DEMO_TIRE_IDS.tire03,
+    category: "タイヤ",
+    name: "[DEMO] Test Tire Premium Grip",
+    brand: "Project Garage Demo",
+    description: DEMO_NOTE,
+    priceMinYen: 150_000,
+    priceMaxYen: 170_000,
+    appearance: "high",
+    comfort: "high",
+    practicality: "medium",
+    resale: "low",
+    style: "高級感",
+    tags: ["demo", "test-data", "高級感", "グリップ"],
+  },
+  {
+    id: DEMO_TIRE_IDS.tire04,
+    category: "タイヤ",
+    name: "[DEMO] Test Tire Family Safe",
+    brand: "Project Garage Demo",
+    description: DEMO_NOTE,
+    priceMinYen: 165_000,
+    priceMaxYen: 185_000,
+    appearance: "medium",
+    comfort: "high",
+    practicality: "high",
+    resale: "high",
+    style: "シンプル",
+    tags: ["demo", "test-data", "ファミリー", "実用性"],
+  },
+  {
+    id: DEMO_TIRE_IDS.tire05,
+    category: "タイヤ",
+    name: "[DEMO] Test Tire Max Budget",
+    brand: "Project Garage Demo",
+    description: DEMO_NOTE,
+    priceMinYen: 195_000,
+    priceMaxYen: 220_000,
+    appearance: "high",
+    comfort: "high",
+    practicality: "medium",
+    resale: "medium",
+    style: "高級感",
+    tags: ["demo", "test-data", "上限付近"],
+  },
+  {
+    id: DEMO_TIRE_IDS.tire06,
+    category: "タイヤ",
+    name: "[DEMO] Test Tire Over Budget",
+    brand: "Project Garage Demo",
+    description: `${DEMO_NOTE} 予算フィルタ確認用（20万円超）。`,
+    priceMinYen: 260_000,
+    priceMaxYen: 290_000,
+    appearance: "high",
+    comfort: "high",
+    practicality: "medium",
+    resale: "low",
+    style: "高級感",
+    tags: ["demo", "test-data", "予算超過確認用"],
+  },
+] as const;
+
+const ALL_DEMO_PRODUCT_ROWS = [
+  ...DEMO_PRODUCT_ROWS,
+  ...DEMO_DASHCAM_ROWS,
+  ...DEMO_TIRE_ROWS,
+];
+
+const demoProductIdList = [
+  ...Object.values(DEMO_PRODUCT_IDS),
+  ...Object.values(DEMO_DASHCAM_IDS),
+  ...Object.values(DEMO_TIRE_IDS),
+];
+
 const VEHICLE = {
   maker: "Toyota",
   model: "Voxy",
@@ -133,8 +351,6 @@ const VEHICLE = {
 const client = postgres(url, { max: 1 });
 const db = drizzle(client);
 
-const demoProductIdList = Object.values(DEMO_PRODUCT_IDS);
-
 const [voxyCarMaster] = await db
   .select({ id: carMasters.id })
   .from(carMasters)
@@ -143,7 +359,7 @@ const [voxyCarMaster] = await db
 
 const carMasterId = voxyCarMaster?.id ?? null;
 
-for (const row of DEMO_PRODUCT_ROWS) {
+for (const row of ALL_DEMO_PRODUCT_ROWS) {
   await db
     .insert(products)
     .values({
@@ -206,7 +422,10 @@ const compatCount = await db
   .from(productVehicleCompatibilities)
   .where(inArray(productVehicleCompatibilities.productId, demoProductIdList));
 
-console.log(`demo products upserted: ${DEMO_PRODUCT_ROWS.length}`);
+console.log(`demo products upserted: ${ALL_DEMO_PRODUCT_ROWS.length}`);
+console.log(`  wheel: ${DEMO_PRODUCT_ROWS.length}`);
+console.log(`  dashcam: ${DEMO_DASHCAM_ROWS.length}`);
+console.log(`  tire: ${DEMO_TIRE_ROWS.length}`);
 console.log(`demo compatibilities inserted: ${compatCount.length}`);
 console.log(`carMasterId linked: ${carMasterId ?? "none (maker/model text only)"}`);
 

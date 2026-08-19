@@ -343,7 +343,18 @@ function ConsultPage() {
 
   const showRecommendations =
     Boolean(summary?.category) &&
-    (recommendations.loading || recommendations.items.length > 0);
+    (recommendations.loading ||
+      recommendations.items.length > 0 ||
+      recommendations.error ||
+      (recommendations.requestKey !== null &&
+        !recommendations.loading &&
+        !recommendations.error &&
+        recommendations.items.length === 0));
+  const recommendationsEmpty =
+    recommendations.requestKey !== null &&
+    !recommendations.loading &&
+    !recommendations.error &&
+    recommendations.items.length === 0;
   const showExamples = messages.length === 1 && !isReplying && !showRecommendations;
   const budgetLabel = summary ? formatBudgetLabel(summary) : null;
   const priorityLabels = summary ? summaryPriorityLabels(summary) : [];
@@ -434,6 +445,8 @@ function ConsultPage() {
               <ProductRecommendationSection
                 items={recommendations.items}
                 loading={recommendations.loading}
+                error={recommendations.error}
+                empty={recommendationsEmpty}
               />
             ) : null}
 
