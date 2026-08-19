@@ -57,6 +57,6 @@ export const recommendProductsForConsultation = createServerFn({ method: "POST" 
       return { items, source };
     } catch (error) {
       console.error("[recommendProductsForConsultation] Failed:", error);
-      return { items: [], source: null };
+      throw error;
     }
   });
