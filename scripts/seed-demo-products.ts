@@ -12,6 +12,7 @@ import postgres from "postgres";
 import { carMasters } from "../src/lib/server/db/schema/car-masters";
 import { productVehicleCompatibilities } from "../src/lib/server/db/schema/product-vehicle-compatibilities";
 import { products } from "../src/lib/server/db/schema/products";
+import { ALL_DEMO_PRODUCT_ID_LIST, DEMO_PRODUCT_IDS } from "../src/lib/product/demo-product-ids";
 
 const url = process.env.MIGRATE_URL;
 if (!url) {
@@ -22,18 +23,11 @@ const DEMO_NOTE =
   "Project Garage 動作確認用のデモ商品です。実在の販売商品ではありません。";
 
 /** Stable IDs so re-running the seed updates the same rows. */
-const DEMO_PRODUCT_IDS = {
-  wheel01: "a1000001-0001-4001-8001-000000000001",
-  wheel02: "a1000001-0001-4001-8001-000000000002",
-  wheel03: "a1000001-0001-4001-8001-000000000003",
-  wheel04: "a1000001-0001-4001-8001-000000000004",
-  wheel05: "a1000001-0001-4001-8001-000000000005",
-  wheel06: "a1000001-0001-4001-8001-000000000006",
-} as const;
+const DEMO_IDS = DEMO_PRODUCT_IDS;
 
 const DEMO_PRODUCT_ROWS = [
   {
-    id: DEMO_PRODUCT_IDS.wheel01,
+    id: DEMO_IDS.wheel01,
     category: "ホイール",
     name: "[DEMO] Test Wheel Luxe 18",
     brand: "Project Garage Demo",
@@ -48,7 +42,7 @@ const DEMO_PRODUCT_ROWS = [
     tags: ["demo", "test-data", "18インチ", "メッシュ", "高級感"],
   },
   {
-    id: DEMO_PRODUCT_IDS.wheel02,
+    id: DEMO_IDS.wheel02,
     category: "ホイール",
     name: "[DEMO] Test Wheel Comfort Mesh",
     brand: "Project Garage Demo",
@@ -63,7 +57,7 @@ const DEMO_PRODUCT_ROWS = [
     tags: ["demo", "test-data", "18インチ", "メッシュ", "高級感"],
   },
   {
-    id: DEMO_PRODUCT_IDS.wheel03,
+    id: DEMO_IDS.wheel03,
     category: "ホイール",
     name: "[DEMO] Test Wheel Budget Line",
     brand: "Project Garage Demo",
@@ -78,7 +72,7 @@ const DEMO_PRODUCT_ROWS = [
     tags: ["demo", "test-data", "17インチ", "高級感"],
   },
   {
-    id: DEMO_PRODUCT_IDS.wheel04,
+    id: DEMO_IDS.wheel04,
     category: "ホイール",
     name: "[DEMO] Test Wheel Premium Edge",
     brand: "Project Garage Demo",
@@ -93,7 +87,7 @@ const DEMO_PRODUCT_ROWS = [
     tags: ["demo", "test-data", "18インチ", "高級感"],
   },
   {
-    id: DEMO_PRODUCT_IDS.wheel05,
+    id: DEMO_IDS.wheel05,
     category: "ホイール",
     name: "[DEMO] Test Wheel Max Budget",
     brand: "Project Garage Demo",
@@ -108,7 +102,7 @@ const DEMO_PRODUCT_ROWS = [
     tags: ["demo", "test-data", "18インチ", "メッシュ"],
   },
   {
-    id: DEMO_PRODUCT_IDS.wheel06,
+    id: DEMO_IDS.wheel06,
     category: "ホイール",
     name: "[DEMO] Test Wheel Over Budget",
     brand: "Project Garage Demo",
@@ -125,18 +119,9 @@ const DEMO_PRODUCT_ROWS = [
 ] as const;
 
 /** Stable IDs for demo dashcam products (Phase 6-6). */
-const DEMO_DASHCAM_IDS = {
-  dashcam01: "a2000001-0001-4001-8001-000000000001",
-  dashcam02: "a2000001-0001-4001-8001-000000000002",
-  dashcam03: "a2000001-0001-4001-8001-000000000003",
-  dashcam04: "a2000001-0001-4001-8001-000000000004",
-  dashcam05: "a2000001-0001-4001-8001-000000000005",
-  dashcam06: "a2000001-0001-4001-8001-000000000006",
-} as const;
-
 const DEMO_DASHCAM_ROWS = [
   {
-    id: DEMO_DASHCAM_IDS.dashcam01,
+    id: DEMO_IDS.dashcam01,
     category: "ドラレコ",
     name: "[DEMO] Test Dashcam Compact",
     brand: "Project Garage Demo",
@@ -151,7 +136,7 @@ const DEMO_DASHCAM_ROWS = [
     tags: ["demo", "test-data", "前後2カメラ", "シンプル"],
   },
   {
-    id: DEMO_DASHCAM_IDS.dashcam02,
+    id: DEMO_IDS.dashcam02,
     category: "ドラレコ",
     name: "[DEMO] Test Dashcam Safety Plus",
     brand: "Project Garage Demo",
@@ -166,7 +151,7 @@ const DEMO_DASHCAM_ROWS = [
     tags: ["demo", "test-data", "駐車監視", "純正風"],
   },
   {
-    id: DEMO_DASHCAM_IDS.dashcam03,
+    id: DEMO_IDS.dashcam03,
     category: "ドラレコ",
     name: "[DEMO] Test Dashcam Wide View",
     brand: "Project Garage Demo",
@@ -181,7 +166,7 @@ const DEMO_DASHCAM_ROWS = [
     tags: ["demo", "test-data", "広角", "実用性"],
   },
   {
-    id: DEMO_DASHCAM_IDS.dashcam04,
+    id: DEMO_IDS.dashcam04,
     category: "ドラレコ",
     name: "[DEMO] Test Dashcam Premium Guard",
     brand: "Project Garage Demo",
@@ -196,7 +181,7 @@ const DEMO_DASHCAM_ROWS = [
     tags: ["demo", "test-data", "高画質", "高級感"],
   },
   {
-    id: DEMO_DASHCAM_IDS.dashcam05,
+    id: DEMO_IDS.dashcam05,
     category: "ドラレコ",
     name: "[DEMO] Test Dashcam Max Budget",
     brand: "Project Garage Demo",
@@ -211,7 +196,7 @@ const DEMO_DASHCAM_ROWS = [
     tags: ["demo", "test-data", "上限付近"],
   },
   {
-    id: DEMO_DASHCAM_IDS.dashcam06,
+    id: DEMO_IDS.dashcam06,
     category: "ドラレコ",
     name: "[DEMO] Test Dashcam Over Budget",
     brand: "Project Garage Demo",
@@ -228,18 +213,9 @@ const DEMO_DASHCAM_ROWS = [
 ] as const;
 
 /** Stable IDs for demo tire products (Phase 6-6). */
-const DEMO_TIRE_IDS = {
-  tire01: "a3000001-0001-4001-8001-000000000001",
-  tire02: "a3000001-0001-4001-8001-000000000002",
-  tire03: "a3000001-0001-4001-8001-000000000003",
-  tire04: "a3000001-0001-4001-8001-000000000004",
-  tire05: "a3000001-0001-4001-8001-000000000005",
-  tire06: "a3000001-0001-4001-8001-000000000006",
-} as const;
-
 const DEMO_TIRE_ROWS = [
   {
-    id: DEMO_TIRE_IDS.tire01,
+    id: DEMO_IDS.tire01,
     category: "タイヤ",
     name: "[DEMO] Test Tire Comfort Tour",
     brand: "Project Garage Demo",
@@ -254,7 +230,7 @@ const DEMO_TIRE_ROWS = [
     tags: ["demo", "test-data", "低ノイズ", "乗り心地"],
   },
   {
-    id: DEMO_TIRE_IDS.tire02,
+    id: DEMO_IDS.tire02,
     category: "タイヤ",
     name: "[DEMO] Test Tire Quiet Line",
     brand: "Project Garage Demo",
@@ -269,7 +245,7 @@ const DEMO_TIRE_ROWS = [
     tags: ["demo", "test-data", "静音", "純正風"],
   },
   {
-    id: DEMO_TIRE_IDS.tire03,
+    id: DEMO_IDS.tire03,
     category: "タイヤ",
     name: "[DEMO] Test Tire Premium Grip",
     brand: "Project Garage Demo",
@@ -284,7 +260,7 @@ const DEMO_TIRE_ROWS = [
     tags: ["demo", "test-data", "高級感", "グリップ"],
   },
   {
-    id: DEMO_TIRE_IDS.tire04,
+    id: DEMO_IDS.tire04,
     category: "タイヤ",
     name: "[DEMO] Test Tire Family Safe",
     brand: "Project Garage Demo",
@@ -299,7 +275,7 @@ const DEMO_TIRE_ROWS = [
     tags: ["demo", "test-data", "ファミリー", "実用性"],
   },
   {
-    id: DEMO_TIRE_IDS.tire05,
+    id: DEMO_IDS.tire05,
     category: "タイヤ",
     name: "[DEMO] Test Tire Max Budget",
     brand: "Project Garage Demo",
@@ -314,7 +290,7 @@ const DEMO_TIRE_ROWS = [
     tags: ["demo", "test-data", "上限付近"],
   },
   {
-    id: DEMO_TIRE_IDS.tire06,
+    id: DEMO_IDS.tire06,
     category: "タイヤ",
     name: "[DEMO] Test Tire Over Budget",
     brand: "Project Garage Demo",
@@ -336,11 +312,7 @@ const ALL_DEMO_PRODUCT_ROWS = [
   ...DEMO_TIRE_ROWS,
 ];
 
-const demoProductIdList = [
-  ...Object.values(DEMO_PRODUCT_IDS),
-  ...Object.values(DEMO_DASHCAM_IDS),
-  ...Object.values(DEMO_TIRE_IDS),
-];
+const demoProductIdList = ALL_DEMO_PRODUCT_ID_LIST;
 
 const VEHICLE = {
   maker: "Toyota",
@@ -380,6 +352,7 @@ for (const row of ALL_DEMO_PRODUCT_ROWS) {
       style: row.style,
       tags: [...row.tags],
       isActive: true,
+      isDemo: true,
     })
     .onConflictDoUpdate({
       target: products.id,
@@ -397,6 +370,7 @@ for (const row of ALL_DEMO_PRODUCT_ROWS) {
         style: row.style,
         tags: [...row.tags],
         isActive: true,
+        isDemo: true,
         updatedAt: new Date(),
       },
     });

@@ -124,7 +124,7 @@ assert(wheelTotal >= 6, `expected at least 6 wheel products, got ${wheelTotal}`)
 assert(dashcamTotal >= 6, `expected at least 6 dashcam products, got ${dashcamTotal}`);
 assert(tireTotal >= 6, `expected at least 6 tire products, got ${tireTotal}`);
 
-const catalog = await fetchActiveProductsWithCompatibilities();
+const catalog = await fetchActiveProductsWithCompatibilities({ includeDemo: true });
 console.log(`fetchActiveProductsWithCompatibilities: ${catalog.length}`);
 
 assert(catalog.length >= 18, `expected at least 18 active catalog products, got ${catalog.length}`);

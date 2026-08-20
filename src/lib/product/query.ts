@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 
 import { getDb } from "@/lib/server/db/client.server";
 import {
@@ -10,6 +10,27 @@ import type { Product, ProductAttributes, VehicleCompatibility } from "./types";
 
 type ProductRow = typeof products.$inferSelect;
 type CompatibilityRow = typeof productVehicleCompatibilities.$inferSelect;
+
+export type FetchActiveProductsOptions = {
+  /** Include demo catalog rows — intended for verification scripts and local QA. */
+  includeDemo?: boolean;
+};
+
+export function isProductEligibleForRecommendation(
+  product: Pick<ProductRow, "isActive" | "isDemo">,
+  options: FetchActiveProductsOptions = {},
+): boolean {
+  if (!product.isActive) {
+    return false;
+  }
+
+  const includeDemo = options.includeDemo ?? false;
+  if (product.isDemo && !includeDemo) {
+    return false;
+  }
+
+  return true;
+}
 
 function toPriorityLevel(value: string): PriorityLevel {
   if (value === "high" || value === "medium" || value === "low" || value === "unknown") {
@@ -58,13 +79,20 @@ function assembleProduct(row: ProductRow, compatRows: CompatibilityRow[]): Produ
 }
 
 /** Load active products with vehicle compatibilities for deterministic matching. */
-export async function fetchActiveProductsWithCompatibilities(): Promise<Product[]> {
+export async function fetchActiveProductsWithCompatibilities(
+  options: FetchActiveProductsOptions = {},
+): Promise<Product[]> {
   const db = getDb();
+  const includeDemo = options.includeDemo ?? false;
 
   const productRows = await db
     .select()
     .from(products)
-    .where(eq(products.isActive, true));
+    .where(
+      includeDemo
+        ? eq(products.isActive, true)
+        : and(eq(products.isActive, true), eq(products.isDemo, false)),
+    );
 
   if (productRows.length === 0) {
     return [];

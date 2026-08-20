@@ -1,0 +1,2 @@
+category,name,brand,price_min_yen,price_max_yen,description,image_url,product_url,purchase_url,appearance,comfort,practicality,resale,style,tags
+ホイール,RAYS DAYTONA 18インチ,RAYS,168000,198000,90系Voxy向けの実商品テストデータ,https://example.com/images/daytona.jpg,https://example.com/products/daytona,https://shop.example.com/daytona,high,medium,high,medium,高級感,"18インチ,メッシュ"
