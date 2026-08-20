@@ -58,8 +58,6 @@ const EMPTY_RECOMMENDATIONS: RecommendationState = {
 };
 const SCROLL_NEAR_BOTTOM_PX = 120;
 const SCROLL_CONTENT_BOTTOM_PADDING_PX = 16;
-const RECOMMENDATION_SCROLL_EXTRA_BUFFER_PX = 48;
-const RECOMMENDATION_SECTION_TOP_GAP_PX = 12;
 
 type ChatMessage = {
   id: string;
@@ -206,76 +204,26 @@ function ConsultPage() {
     scrollEl?.scrollTo({ top: scrollEl.scrollHeight, behavior: "smooth" });
   }, []);
 
-  const scrollRecommendationsIntoScrollViewport = useCallback(() => {
-    const scrollEl = scrollRef.current;
-    const card = scrollEl?.querySelector<HTMLElement>(
-      '[aria-labelledby="product-recommendations-title"] a[href^="/products/"]',
-    );
-    if (!scrollEl || !card) return;
-
-    const cardTop = card.offsetTop;
-    const cardBottom = cardTop + card.offsetHeight;
-    const viewportHeight = scrollEl.clientHeight;
-    const bottomAlignedScrollTop =
-      cardBottom - viewportHeight + RECOMMENDATION_SCROLL_EXTRA_BUFFER_PX;
-    const topAlignedScrollTop = cardTop - RECOMMENDATION_SECTION_TOP_GAP_PX;
-    const maxScrollTop = Math.max(0, scrollEl.scrollHeight - viewportHeight);
-
-    let targetScrollTop: number;
-    if (card.offsetHeight <= viewportHeight) {
-      targetScrollTop = bottomAlignedScrollTop;
-    } else {
-      targetScrollTop = topAlignedScrollTop;
-    }
-
-    scrollEl.scrollTo({
-      top: Math.min(Math.max(0, targetScrollTop), maxScrollTop),
-      behavior: "auto",
-    });
-  }, []);
-
   useEffect(() => {
     if (!hasVisibleProductCards) return;
-
-    const scrollEl = scrollRef.current;
-    if (!scrollEl) return;
-
-    const repositionCardInScrollViewport = () => {
-      scrollRecommendationsIntoScrollViewport();
-    };
-
-    repositionCardInScrollViewport();
-
-    const section = scrollEl.querySelector('[aria-labelledby="product-recommendations-title"]');
-    if (!section) return;
-
-    const resizeObserver = new ResizeObserver(repositionCardInScrollViewport);
-    resizeObserver.observe(section);
-    return () => resizeObserver.disconnect();
-  }, [hasVisibleProductCards, recommendations.items, scrollRecommendationsIntoScrollViewport]);
+    scrollRef.current?.scrollTo({ top: 0, behavior: "auto" });
+  }, [hasVisibleProductCards, recommendations.items]);
 
   useEffect(() => {
     if (!isNearBottomRef.current && !pendingAutoScrollRef.current) return;
+    if (hasVisibleProductCards) {
+      pendingAutoScrollRef.current = false;
+      return;
+    }
 
     pendingAutoScrollRef.current = false;
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
-        if (hasVisibleProductCards) {
-          scrollRecommendationsIntoScrollViewport();
-          return;
-        }
         if (recommendations.loading) return;
         scrollToLatest();
       });
     });
-  }, [
-    messages,
-    isReplying,
-    recommendations.loading,
-    hasVisibleProductCards,
-    scrollToLatest,
-    scrollRecommendationsIntoScrollViewport,
-  ]);
+  }, [messages, isReplying, recommendations.loading, hasVisibleProductCards, scrollToLatest]);
 
   useEffect(() => {
     const scrollEl = scrollRef.current;
@@ -395,9 +343,7 @@ function ConsultPage() {
   const showExamples = messages.length === 1 && !isReplying && !showRecommendations;
   const budgetLabel = summary ? formatBudgetLabel(summary) : null;
   const priorityLabels = summary ? summaryPriorityLabels(summary) : [];
-  const scrollBottomPadding =
-    SCROLL_CONTENT_BOTTOM_PADDING_PX +
-    (hasVisibleProductCards ? RECOMMENDATION_SCROLL_EXTRA_BUFFER_PX : 0);
+  const scrollBottomPadding = SCROLL_CONTENT_BOTTOM_PADDING_PX;
 
   return (
     <div className="flex h-[100dvh] flex-col overflow-hidden bg-background">
@@ -498,13 +444,15 @@ function ConsultPage() {
           </div>
 
           {showRecommendations ? (
+            <div className={hasVisibleProductCards ? "[&_section>div:first-child]:hidden" : undefined}>
               <ProductRecommendationSection
                 items={recommendations.items}
                 loading={recommendations.loading}
                 error={recommendations.error}
                 empty={recommendationsEmpty}
               />
-            ) : null}
+            </div>
+          ) : null}
 
             <div ref={messagesEndRef} aria-hidden className="h-px w-full shrink-0" />
           </div>
