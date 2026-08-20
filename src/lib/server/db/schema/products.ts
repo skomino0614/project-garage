@@ -29,12 +29,14 @@ export const products = pgTable(
     style: text("style").notNull(),
     tags: jsonb("tags").$type<string[]>().notNull().default([]),
     isActive: boolean("is_active").notNull().default(true),
+    isDemo: boolean("is_demo").notNull().default(false),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [
     index("products_category_idx").on(table.category),
     index("products_is_active_idx").on(table.isActive),
+    index("products_is_demo_idx").on(table.isDemo),
     index("products_price_min_yen_idx").on(table.priceMinYen),
   ],
 );
