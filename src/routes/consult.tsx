@@ -208,23 +208,20 @@ function ConsultPage() {
 
     pendingAutoScrollRef.current = false;
     requestAnimationFrame(() => {
-      requestAnimationFrame(scrollToLatest);
+      requestAnimationFrame(() => {
+        if (recommendations.items.length > 0) {
+          const scrollEl = scrollRef.current;
+          const card = scrollEl?.querySelector<HTMLElement>(
+            '[aria-labelledby="product-recommendations-title"] a[href^="/products/"]',
+          );
+          card?.scrollIntoView({ block: "start", behavior: "smooth" });
+          return;
+        }
+        if (recommendations.loading) return;
+        scrollToLatest();
+      });
     });
   }, [messages, isReplying, recommendations.loading, recommendations.items.length, scrollToLatest]);
-
-  useEffect(() => {
-    if (recommendations.items.length === 0) return;
-
-    const scrollEl = scrollRef.current;
-    const card = scrollEl?.querySelector<HTMLElement>(
-      '[aria-labelledby="product-recommendations-title"] a[href^="/products/"]',
-    );
-    if (!card) return;
-
-    requestAnimationFrame(() => {
-      card.scrollIntoView({ block: "end", behavior: "smooth" });
-    });
-  }, [recommendations.items.length]);
 
   useEffect(() => {
     const scrollEl = scrollRef.current;
