@@ -56,10 +56,9 @@ const EMPTY_RECOMMENDATIONS: RecommendationState = {
   error: false,
   requestKey: null,
 };
-const FOOTER_INSET_FALLBACK_PX = 220;
 const SCROLL_NEAR_BOTTOM_PX = 120;
-const FOOTER_SCROLL_BUFFER_PX = 24;
-const RECOMMENDATION_SCROLL_EXTRA_BUFFER_PX = 32;
+const SCROLL_CONTENT_BOTTOM_PADDING_PX = 16;
+const RECOMMENDATION_SCROLL_EXTRA_BUFFER_PX = 48;
 
 type ChatMessage = {
   id: string;
@@ -121,7 +120,6 @@ function ConsultPage() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [summary, setSummary] = useState<ConsultationSummary | null>(null);
   const [recommendations, setRecommendations] = useState<RecommendationState>(EMPTY_RECOMMENDATIONS);
-  const [footerInset, setFooterInset] = useState(FOOTER_INSET_FALLBACK_PX);
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: "welcome",
@@ -131,39 +129,12 @@ function ConsultPage() {
   ]);
 
   const scrollRef = useRef<HTMLDivElement>(null);
-  const footerRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const isNearBottomRef = useRef(true);
   const pendingAutoScrollRef = useRef(false);
 
   const showSummary = Boolean(summary && hasSummaryDetails(summary));
-
-  const syncFooterInset = useCallback(() => {
-    const footer = footerRef.current;
-    if (!footer) return;
-    setFooterInset(footer.offsetHeight);
-  }, []);
-
-  useEffect(() => {
-    const footer = footerRef.current;
-    if (!footer) return;
-
-    syncFooterInset();
-    const observer = new ResizeObserver(() => syncFooterInset());
-    observer.observe(footer);
-
-    const viewport = window.visualViewport;
-    const onViewportChange = () => syncFooterInset();
-    viewport?.addEventListener("resize", onViewportChange);
-    viewport?.addEventListener("scroll", onViewportChange);
-
-    return () => {
-      observer.disconnect();
-      viewport?.removeEventListener("resize", onViewportChange);
-      viewport?.removeEventListener("scroll", onViewportChange);
-    };
-  }, [syncFooterInset, showSummary, errorMsg, isReplying, input, recommendations.loading, recommendations.items.length]);
 
   const fetchRecommendations = useCallback(
     async (currentSummary: ConsultationSummary, userText: string) => {
@@ -239,19 +210,19 @@ function ConsultPage() {
     requestAnimationFrame(() => {
       requestAnimationFrame(scrollToLatest);
     });
-  }, [messages, isReplying, footerInset, recommendations.loading, recommendations.items.length, scrollToLatest]);
+  }, [messages, isReplying, recommendations.loading, recommendations.items.length, scrollToLatest]);
 
   useEffect(() => {
     if (recommendations.items.length === 0) return;
 
     const scrollEl = scrollRef.current;
-    const section = scrollEl?.querySelector<HTMLElement>(
-      '[aria-labelledby="product-recommendations-title"]',
+    const card = scrollEl?.querySelector<HTMLElement>(
+      '[aria-labelledby="product-recommendations-title"] a[href^="/products/"]',
     );
-    if (!section) return;
+    if (!card) return;
 
     requestAnimationFrame(() => {
-      section.scrollIntoView({ block: "nearest", behavior: "smooth" });
+      card.scrollIntoView({ block: "end", behavior: "smooth" });
     });
   }, [recommendations.items.length]);
 
@@ -374,8 +345,7 @@ function ConsultPage() {
   const budgetLabel = summary ? formatBudgetLabel(summary) : null;
   const priorityLabels = summary ? summaryPriorityLabels(summary) : [];
   const scrollBottomPadding =
-    footerInset +
-    FOOTER_SCROLL_BUFFER_PX +
+    SCROLL_CONTENT_BOTTOM_PADDING_PX +
     (showRecommendations && recommendations.items.length > 0 ? RECOMMENDATION_SCROLL_EXTRA_BUFFER_PX : 0);
 
   return (
@@ -466,25 +436,16 @@ function ConsultPage() {
                 loading={recommendations.loading}
                 error={recommendations.error}
                 empty={recommendationsEmpty}
-                scrollMarginBottom={scrollBottomPadding}
               />
             ) : null}
 
-            <div
-              ref={messagesEndRef}
-              aria-hidden
-              className="h-px w-full shrink-0"
-              style={{ scrollMarginBottom: footerInset + FOOTER_SCROLL_BUFFER_PX }}
-            />
+            <div ref={messagesEndRef} aria-hidden className="h-px w-full shrink-0" />
           </div>
         </div>
       </main>
 
-      <div
-        ref={footerRef}
-        className="pointer-events-none fixed inset-x-0 bottom-0 z-30 border-t border-border/60 bg-background/85 pb-[max(0px,env(safe-area-inset-bottom))] backdrop-blur-xl"
-      >
-        <div className="pointer-events-none mx-auto max-w-2xl px-5 py-3 sm:py-4">
+      <div className="shrink-0 border-t border-border/60 bg-background/85 pb-[max(0px,env(safe-area-inset-bottom))] backdrop-blur-xl">
+        <div className="mx-auto max-w-2xl px-5 py-3 sm:py-4">
           {errorMsg && <p className="mb-2 text-sm text-destructive">{errorMsg}</p>}
           {showSummary && summary && (
             <CompactSummaryCard
@@ -493,7 +454,7 @@ function ConsultPage() {
               priorityLabels={priorityLabels}
             />
           )}
-          <div className="pointer-events-auto mb-3 flex flex-wrap gap-2">
+          <div className="mb-3 flex flex-wrap gap-2">
             {CHIPS.map((chip) => (
               <button
                 key={chip}
@@ -507,7 +468,7 @@ function ConsultPage() {
             ))}
           </div>
 
-          <div className="pointer-events-auto rounded-2xl border border-border/80 bg-card/60 p-2 backdrop-blur transition-all focus-within:border-primary/60 focus-within:glow-blue">
+          <div className="rounded-2xl border border-border/80 bg-card/60 p-2 backdrop-blur transition-all focus-within:border-primary/60 focus-within:glow-blue">
             <div className="flex items-end gap-2">
               <textarea
                 ref={inputRef}
