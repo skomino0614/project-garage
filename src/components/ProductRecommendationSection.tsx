@@ -8,6 +8,7 @@ type ProductRecommendationSectionProps = {
   loading: boolean;
   error?: boolean;
   empty?: boolean;
+  scrollMarginBottom?: number;
 };
 
 const EMPTY_MESSAGE =
@@ -21,6 +22,7 @@ export function ProductRecommendationSection({
   loading,
   error = false,
   empty = false,
+  scrollMarginBottom,
 }: ProductRecommendationSectionProps) {
   if (loading) {
     return (
@@ -62,7 +64,11 @@ export function ProductRecommendationSection({
   }
 
   return (
-    <section aria-labelledby="product-recommendations-title" className="animate-fade-in space-y-3">
+    <section
+      aria-labelledby="product-recommendations-title"
+      className="animate-fade-in space-y-3"
+      style={scrollMarginBottom ? { scrollMarginBottom } : undefined}
+    >
       <div>
         <h2
           id="product-recommendations-title"

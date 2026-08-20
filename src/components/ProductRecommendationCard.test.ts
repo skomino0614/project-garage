@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { buildProductDetailHref, buildProductDetailLinkProps } from "@/lib/product/product-detail-link";
+import {
+  buildProductDetailHref,
+  PRODUCT_DETAIL_ROUTE,
+} from "@/lib/product/product-detail-link";
 
 const sampleItem = {
   productId: "11111111-1111-4111-8111-111111111111",
@@ -9,13 +12,12 @@ const sampleItem = {
 };
 
 describe("ProductRecommendationCard detail navigation", () => {
-  it("generates an internal detail link even when external URLs are null", () => {
-    const link = buildProductDetailLinkProps(sampleItem.productId);
+  it("generates an internal detail href even when external URLs are null", () => {
+    const href = buildProductDetailHref(sampleItem.productId);
 
-    expect(link.to).toBe("/products/$productId");
-    expect(link.params.productId).toBe(sampleItem.productId);
-    expect(link.href).toBe(buildProductDetailHref(sampleItem.productId));
-    expect(link.href).not.toContain("null");
+    expect(href).toBe("/products/11111111-1111-4111-8111-111111111111");
+    expect(PRODUCT_DETAIL_ROUTE).toBe("/products/$productId");
+    expect(href).not.toContain("null");
   });
 
   it("does not use productUrl or purchaseUrl for card navigation", () => {
@@ -25,10 +27,10 @@ describe("ProductRecommendationCard detail navigation", () => {
       purchaseUrl: "https://shop.example.com/buy/demo",
     };
 
-    const link = buildProductDetailLinkProps(externalProduct.productId);
+    const href = buildProductDetailHref(externalProduct.productId);
 
-    expect(link.href).toBe(`/products/${externalProduct.productId}`);
-    expect(link.href).not.toBe(externalProduct.productUrl);
-    expect(link.href).not.toBe(externalProduct.purchaseUrl);
+    expect(href).toBe(`/products/${externalProduct.productId}`);
+    expect(href).not.toBe(externalProduct.productUrl);
+    expect(href).not.toBe(externalProduct.purchaseUrl);
   });
 });

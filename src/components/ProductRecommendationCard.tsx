@@ -1,5 +1,6 @@
-import { Link } from "@tanstack/react-router";
+import { useRouter } from "@tanstack/react-router";
 import { ChevronRight } from "lucide-react";
+import type { MouseEvent } from "react";
 
 import {
   formatCompatibilityLabel,
@@ -7,7 +8,8 @@ import {
   formatProductPrice,
 } from "@/lib/product/recommend-display";
 import {
-  buildProductDetailLinkProps,
+  buildProductDetailHref,
+  PRODUCT_DETAIL_ROUTE,
   shouldShowInternalProductDetailLink,
 } from "@/lib/product/product-detail-link";
 import type { ProductRecommendationDisplayItem } from "@/lib/product/recommend-schemas";
@@ -20,14 +22,33 @@ type ProductRecommendationCardProps = {
 };
 
 export function ProductRecommendationCard({ item }: ProductRecommendationCardProps) {
+  const router = useRouter();
   const compatibilityLabel = formatCompatibilityLabel(
     item.vehicleCompatibility,
     item.compatibilities,
   );
-  const detailLink = buildProductDetailLinkProps(item.productId);
+  const detailHref = buildProductDetailHref(item.productId);
 
-  const handleNavigate = () => {
+  const handleNavigate = (event: MouseEvent<HTMLAnchorElement>) => {
     saveProductRecommendationContext(item);
+
+    const opensNewTab =
+      event.metaKey ||
+      event.ctrlKey ||
+      event.shiftKey ||
+      event.altKey ||
+      event.button !== 0 ||
+      event.currentTarget.target === "_blank";
+
+    if (opensNewTab) {
+      return;
+    }
+
+    event.preventDefault();
+    void router.navigate({
+      to: PRODUCT_DETAIL_ROUTE,
+      params: { productId: item.productId },
+    });
   };
 
   if (!shouldShowInternalProductDetailLink(item)) {
@@ -35,12 +56,14 @@ export function ProductRecommendationCard({ item }: ProductRecommendationCardPro
   }
 
   return (
-    <Link
-      {...detailLink}
-      onClick={handleNavigate}
-      aria-label={`${item.name} の商品詳細を見る`}
-      className="group flex min-w-0 flex-col overflow-hidden rounded-2xl border border-border/80 bg-card/60 shadow-sm backdrop-blur transition-colors hover:border-primary/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
-    >
+    <article className="group relative flex min-w-0 flex-col overflow-hidden rounded-2xl border border-border/80 bg-card/60 shadow-sm backdrop-blur transition-colors hover:border-primary/40">
+      <a
+        href={detailHref}
+        onClick={handleNavigate}
+        aria-label={`${item.name} の商品詳細を見る`}
+        className="absolute inset-0 z-10 rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+      />
+
       {item.imageUrl ? (
         <div className="aspect-[4/3] w-full overflow-hidden border-b border-border/60 bg-muted/20">
           <img
@@ -54,7 +77,7 @@ export function ProductRecommendationCard({ item }: ProductRecommendationCardPro
         <ProductImagePlaceholder />
       )}
 
-      <div className="flex flex-1 cursor-pointer flex-col gap-3 p-4">
+      <div className="relative flex flex-1 flex-col gap-3 p-4">
         <div className="space-y-1">
           <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
             {item.brand}
@@ -104,10 +127,10 @@ export function ProductRecommendationCard({ item }: ProductRecommendationCardPro
         <div className="mt-auto pt-1">
           <span className="inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-background/60 px-3 py-1.5 text-xs font-medium text-foreground transition-colors group-hover:border-primary/40 group-hover:text-primary">
             詳細を見る
-            <ChevronRight className="h-3.5 w-3.5" />
+            <ChevronRight className="h-3.5 w-3.5" aria-hidden />
           </span>
         </div>
       </div>
-    </Link>
+    </article>
   );
 }
