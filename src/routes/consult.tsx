@@ -16,6 +16,12 @@ import {
   summaryPriorityLabels,
 } from "@/lib/consult/build-summary";
 import { formatConsultContent } from "@/lib/consult/format-content";
+import {
+  loadConsultState,
+  saveConsultState,
+  type StoredConsultState,
+} from "@/lib/consult/consult-state-storage";
+import { computeScrollTopForProductCard } from "@/lib/consult/consult-scroll";
 import type { ConsultationSummary } from "@/lib/consult/types";
 import {
   categoryPrompt,
@@ -50,20 +56,48 @@ type RecommendationState = {
   requestKey: string | null;
 };
 
+type ChatMessage = {
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+};
+
 const EMPTY_RECOMMENDATIONS: RecommendationState = {
   loading: false,
   items: [],
   error: false,
   requestKey: null,
 };
+const WELCOME_MESSAGE: ChatMessage = {
+  id: "welcome",
+  role: "assistant",
+  content: "この車について、何でも相談してください。",
+};
 const SCROLL_NEAR_BOTTOM_PX = 120;
 const SCROLL_CONTENT_BOTTOM_PADDING_PX = 16;
 
-type ChatMessage = {
-  id: string;
-  role: "user" | "assistant";
-  content: string;
-};
+function isInitialConsultState(
+  messages: ChatMessage[],
+  summary: ConsultationSummary | null,
+  recommendations: RecommendationState,
+): boolean {
+  return (
+    messages.length === 1 &&
+    messages[0]?.id === WELCOME_MESSAGE.id &&
+    summary === null &&
+    recommendations.items.length === 0 &&
+    !recommendations.loading &&
+    !recommendations.error &&
+    recommendations.requestKey === null
+  );
+}
+
+function recommendationsForPersistence(recommendations: RecommendationState): StoredConsultState["recommendations"] {
+  return {
+    ...recommendations,
+    loading: false,
+  };
+}
 
 function isOpenAiNotConfigured(error: unknown): boolean {
   const msg = error instanceof Error ? error.message : String(error);
@@ -119,22 +153,30 @@ function ConsultPage() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [summary, setSummary] = useState<ConsultationSummary | null>(null);
   const [recommendations, setRecommendations] = useState<RecommendationState>(EMPTY_RECOMMENDATIONS);
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    {
-      id: "welcome",
-      role: "assistant",
-      content: "この車について、何でも相談してください。",
-    },
-  ]);
+  const [messages, setMessages] = useState<ChatMessage[]>([WELCOME_MESSAGE]);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesBlockRef = useRef<HTMLDivElement>(null);
+  const recommendationsRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const isNearBottomRef = useRef(true);
   const pendingAutoScrollRef = useRef(false);
+  const pendingScrollRestoreRef = useRef<number | null>(null);
+  const shouldFitProductCardRef = useRef(false);
+  const persistedStateRef = useRef({
+    maker,
+    model,
+    series,
+    messages: [WELCOME_MESSAGE] as ChatMessage[],
+    summary: null as ConsultationSummary | null,
+    recommendations: EMPTY_RECOMMENDATIONS,
+  });
+
+  persistedStateRef.current = { maker, model, series, messages, summary, recommendations };
 
   const showSummary = Boolean(summary && hasSummaryDetails(summary));
-  const hasVisibleProductCards =
+  const hasProductCards =
     recommendations.items.length > 0 && !recommendations.loading && !recommendations.error;
 
   const fetchRecommendations = useCallback(
@@ -177,6 +219,7 @@ function ConsultPage() {
             requestKey,
           };
         });
+        shouldFitProductCardRef.current = result.items.length > 0;
         pendingAutoScrollRef.current = true;
       } catch (error) {
         console.error("[consult] recommendation request failed:", error);
@@ -204,14 +247,85 @@ function ConsultPage() {
     scrollEl?.scrollTo({ top: scrollEl.scrollHeight, behavior: "smooth" });
   }, []);
 
+  const persistConsultState = useCallback((scrollTop?: number) => {
+    const snapshot = persistedStateRef.current;
+    if (isInitialConsultState(snapshot.messages, snapshot.summary, snapshot.recommendations)) {
+      return;
+    }
+
+    saveConsultState(snapshot.maker, snapshot.model, snapshot.series, {
+      messages: snapshot.messages,
+      summary: snapshot.summary,
+      recommendations: recommendationsForPersistence(snapshot.recommendations),
+      scrollTop: scrollTop ?? scrollRef.current?.scrollTop,
+    });
+  }, []);
+
   useEffect(() => {
-    if (!hasVisibleProductCards) return;
-    scrollRef.current?.scrollTo({ top: 0, behavior: "auto" });
-  }, [hasVisibleProductCards, recommendations.items]);
+    const stored = loadConsultState(maker, model, series);
+    if (stored) {
+      setMessages(stored.messages);
+      setSummary(stored.summary);
+      setRecommendations(stored.recommendations);
+      pendingScrollRestoreRef.current = stored.scrollTop ?? 0;
+      shouldFitProductCardRef.current = false;
+    } else {
+      setMessages([WELCOME_MESSAGE]);
+      setSummary(null);
+      setRecommendations(EMPTY_RECOMMENDATIONS);
+      pendingScrollRestoreRef.current = null;
+    }
+    setInput("");
+    setErrorMsg(null);
+    setIsReplying(false);
+  }, [maker, model, series]);
+
+  useEffect(() => {
+    persistConsultState();
+  }, [messages, summary, recommendations, maker, model, series, persistConsultState]);
+
+  useEffect(() => {
+    return () => {
+      persistConsultState(scrollRef.current?.scrollTop);
+    };
+  }, [persistConsultState]);
+
+  useEffect(() => {
+    const scrollEl = scrollRef.current;
+    if (!scrollEl) return;
+
+    const runScrollAdjustment = () => {
+      if (pendingScrollRestoreRef.current !== null) {
+        scrollEl.scrollTop = pendingScrollRestoreRef.current;
+        pendingScrollRestoreRef.current = null;
+        return;
+      }
+
+      if (recommendations.loading || recommendations.items.length === 0) return;
+      if (!shouldFitProductCardRef.current) return;
+      shouldFitProductCardRef.current = false;
+
+      const card = recommendationsRef.current?.querySelector('a[href^="/products/"]');
+      if (!(card instanceof HTMLElement)) return;
+
+      scrollEl.scrollTo({
+        top: computeScrollTopForProductCard(scrollEl, card),
+        behavior: "auto",
+      });
+    };
+
+    requestAnimationFrame(() => {
+      requestAnimationFrame(runScrollAdjustment);
+    });
+  }, [messages, recommendations.items, recommendations.loading]);
 
   useEffect(() => {
     if (!isNearBottomRef.current && !pendingAutoScrollRef.current) return;
-    if (hasVisibleProductCards) {
+    if (pendingScrollRestoreRef.current !== null) {
+      pendingAutoScrollRef.current = false;
+      return;
+    }
+    if (shouldFitProductCardRef.current && recommendations.items.length > 0) {
       pendingAutoScrollRef.current = false;
       return;
     }
@@ -223,7 +337,7 @@ function ConsultPage() {
         scrollToLatest();
       });
     });
-  }, [messages, isReplying, recommendations.loading, hasVisibleProductCards, scrollToLatest]);
+  }, [messages, isReplying, recommendations.loading, recommendations.items.length, scrollToLatest]);
 
   useEffect(() => {
     const scrollEl = scrollRef.current;
@@ -353,45 +467,34 @@ function ConsultPage() {
         <div className="absolute left-1/2 top-[-120px] h-[360px] w-[640px] -translate-x-1/2 rounded-full bg-primary/10 blur-[100px]" />
       </div>
 
-      <main
-        className={`relative mx-auto flex min-h-0 w-full max-w-2xl flex-1 flex-col px-5 ${
-          hasVisibleProductCards ? "pt-2" : "pt-6 sm:pt-8"
-        }`}
-      >
-        {!hasVisibleProductCards ? (
-          <header className="animate-fade-in shrink-0">
-            <Link
-              to="/"
-              className="group inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-card/50 px-3.5 py-1.5 text-xs text-muted-foreground backdrop-blur transition-colors hover:border-primary/50 hover:text-foreground"
-            >
-              <span className="h-1.5 w-1.5 rounded-full bg-primary" />
-              <span className="font-medium text-foreground/90">Project Garage</span>
-            </Link>
+      <main className="relative mx-auto flex min-h-0 w-full max-w-2xl flex-1 flex-col px-5 pt-6 sm:pt-8">
+        <header className="animate-fade-in shrink-0">
+          <Link
+            to="/"
+            className="group inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-card/50 px-3.5 py-1.5 text-xs text-muted-foreground backdrop-blur transition-colors hover:border-primary/50 hover:text-foreground"
+          >
+            <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+            <span className="font-medium text-foreground/90">Project Garage</span>
+          </Link>
 
-            <p className="mt-4 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              車両
-            </p>
-            <h1 className="mt-1 text-xl font-bold tracking-tight text-foreground sm:text-2xl">
-              {vehicleLabel}
-            </h1>
-          </header>
-        ) : null}
+          <p className="mt-4 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            車両
+          </p>
+          <h1 className="mt-1 text-xl font-bold tracking-tight text-foreground sm:text-2xl">
+            {vehicleLabel}
+          </h1>
+        </header>
 
         <div
           ref={scrollRef}
-          className={`min-h-0 flex-1 overflow-y-auto overscroll-contain ${
-            hasVisibleProductCards ? "mt-0" : "mt-6"
-          }`}
+          className="mt-6 min-h-0 flex-1 overflow-y-auto overscroll-contain"
         >
           <div
             className="flex flex-col gap-4"
             style={{ paddingBottom: scrollBottomPadding }}
           >
-          <div
-            className={`flex flex-col gap-4 ${hasVisibleProductCards ? "hidden" : ""}`}
-            aria-hidden={hasVisibleProductCards}
-          >
-            {messages.map((message) => (
+            <div ref={messagesBlockRef} data-testid="consult-messages" className="flex flex-col gap-4">
+              {messages.map((message) => (
               <div
                 key={message.id}
                 className={`animate-fade-in flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
@@ -441,18 +544,18 @@ function ConsultPage() {
                 </div>
               </div>
             )}
-          </div>
-
-          {showRecommendations ? (
-            <div className={hasVisibleProductCards ? "[&_section>div:first-child]:hidden" : undefined}>
-              <ProductRecommendationSection
-                items={recommendations.items}
-                loading={recommendations.loading}
-                error={recommendations.error}
-                empty={recommendationsEmpty}
-              />
             </div>
-          ) : null}
+
+            {showRecommendations ? (
+              <div ref={recommendationsRef}>
+                <ProductRecommendationSection
+                  items={recommendations.items}
+                  loading={recommendations.loading}
+                  error={recommendations.error}
+                  empty={recommendationsEmpty}
+                />
+              </div>
+            ) : null}
 
             <div ref={messagesEndRef} aria-hidden className="h-px w-full shrink-0" />
           </div>
@@ -460,13 +563,9 @@ function ConsultPage() {
       </main>
 
       <div className="shrink-0 border-t border-border/60 bg-background/85 pb-[max(0px,env(safe-area-inset-bottom))] backdrop-blur-xl">
-        <div
-          className={`mx-auto max-w-2xl px-5 ${
-            hasVisibleProductCards ? "py-2 sm:py-3" : "py-3 sm:py-4"
-          }`}
-        >
+        <div className="mx-auto max-w-2xl px-5 py-3 sm:py-4">
           {errorMsg && <p className="mb-2 text-sm text-destructive">{errorMsg}</p>}
-          {showSummary && summary && !hasVisibleProductCards && (
+          {showSummary && summary && !hasProductCards && (
             <CompactSummaryCard
               summary={summary}
               budgetLabel={budgetLabel}
