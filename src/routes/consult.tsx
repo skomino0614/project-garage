@@ -214,7 +214,7 @@ function ConsultPage() {
           const card = scrollEl?.querySelector<HTMLElement>(
             '[aria-labelledby="product-recommendations-title"] a[href^="/products/"]',
           );
-          card?.scrollIntoView({ block: "start", behavior: "smooth" });
+          card?.scrollIntoView({ block: "center", behavior: "smooth" });
           return;
         }
         if (recommendations.loading) return;
