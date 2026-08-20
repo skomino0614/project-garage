@@ -59,6 +59,7 @@ const EMPTY_RECOMMENDATIONS: RecommendationState = {
 const SCROLL_NEAR_BOTTOM_PX = 120;
 const SCROLL_CONTENT_BOTTOM_PADDING_PX = 16;
 const RECOMMENDATION_SCROLL_EXTRA_BUFFER_PX = 48;
+const RECOMMENDATION_SECTION_TOP_GAP_PX = 12;
 
 type ChatMessage = {
   id: string;
@@ -135,6 +136,8 @@ function ConsultPage() {
   const pendingAutoScrollRef = useRef(false);
 
   const showSummary = Boolean(summary && hasSummaryDetails(summary));
+  const hasVisibleProductCards =
+    recommendations.items.length > 0 && !recommendations.loading && !recommendations.error;
 
   const fetchRecommendations = useCallback(
     async (currentSummary: ConsultationSummary, userText: string) => {
@@ -203,25 +206,76 @@ function ConsultPage() {
     scrollEl?.scrollTo({ top: scrollEl.scrollHeight, behavior: "smooth" });
   }, []);
 
+  const scrollRecommendationsIntoScrollViewport = useCallback(() => {
+    const scrollEl = scrollRef.current;
+    const card = scrollEl?.querySelector<HTMLElement>(
+      '[aria-labelledby="product-recommendations-title"] a[href^="/products/"]',
+    );
+    if (!scrollEl || !card) return;
+
+    const cardTop = card.offsetTop;
+    const cardBottom = cardTop + card.offsetHeight;
+    const viewportHeight = scrollEl.clientHeight;
+    const bottomAlignedScrollTop =
+      cardBottom - viewportHeight + RECOMMENDATION_SCROLL_EXTRA_BUFFER_PX;
+    const topAlignedScrollTop = cardTop - RECOMMENDATION_SECTION_TOP_GAP_PX;
+    const maxScrollTop = Math.max(0, scrollEl.scrollHeight - viewportHeight);
+
+    let targetScrollTop: number;
+    if (card.offsetHeight <= viewportHeight) {
+      targetScrollTop = bottomAlignedScrollTop;
+    } else {
+      targetScrollTop = topAlignedScrollTop;
+    }
+
+    scrollEl.scrollTo({
+      top: Math.min(Math.max(0, targetScrollTop), maxScrollTop),
+      behavior: "auto",
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!hasVisibleProductCards) return;
+
+    const scrollEl = scrollRef.current;
+    if (!scrollEl) return;
+
+    const repositionCardInScrollViewport = () => {
+      scrollRecommendationsIntoScrollViewport();
+    };
+
+    repositionCardInScrollViewport();
+
+    const section = scrollEl.querySelector('[aria-labelledby="product-recommendations-title"]');
+    if (!section) return;
+
+    const resizeObserver = new ResizeObserver(repositionCardInScrollViewport);
+    resizeObserver.observe(section);
+    return () => resizeObserver.disconnect();
+  }, [hasVisibleProductCards, recommendations.items, scrollRecommendationsIntoScrollViewport]);
+
   useEffect(() => {
     if (!isNearBottomRef.current && !pendingAutoScrollRef.current) return;
 
     pendingAutoScrollRef.current = false;
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
-        if (recommendations.items.length > 0) {
-          const scrollEl = scrollRef.current;
-          const card = scrollEl?.querySelector<HTMLElement>(
-            '[aria-labelledby="product-recommendations-title"] a[href^="/products/"]',
-          );
-          card?.scrollIntoView({ block: "start", behavior: "smooth" });
+        if (hasVisibleProductCards) {
+          scrollRecommendationsIntoScrollViewport();
           return;
         }
         if (recommendations.loading) return;
         scrollToLatest();
       });
     });
-  }, [messages, isReplying, recommendations.loading, recommendations.items.length, scrollToLatest]);
+  }, [
+    messages,
+    isReplying,
+    recommendations.loading,
+    hasVisibleProductCards,
+    scrollToLatest,
+    scrollRecommendationsIntoScrollViewport,
+  ]);
 
   useEffect(() => {
     const scrollEl = scrollRef.current;
@@ -343,7 +397,7 @@ function ConsultPage() {
   const priorityLabels = summary ? summaryPriorityLabels(summary) : [];
   const scrollBottomPadding =
     SCROLL_CONTENT_BOTTOM_PADDING_PX +
-    (showRecommendations && recommendations.items.length > 0 ? RECOMMENDATION_SCROLL_EXTRA_BUFFER_PX : 0);
+    (hasVisibleProductCards ? RECOMMENDATION_SCROLL_EXTRA_BUFFER_PX : 0);
 
   return (
     <div className="flex h-[100dvh] flex-col overflow-hidden bg-background">
@@ -353,28 +407,43 @@ function ConsultPage() {
         <div className="absolute left-1/2 top-[-120px] h-[360px] w-[640px] -translate-x-1/2 rounded-full bg-primary/10 blur-[100px]" />
       </div>
 
-      <main className="relative mx-auto flex min-h-0 w-full max-w-2xl flex-1 flex-col px-5 pt-6 sm:pt-8">
-        <header className="animate-fade-in shrink-0">
-          <Link
-            to="/"
-            className="group inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-card/50 px-3.5 py-1.5 text-xs text-muted-foreground backdrop-blur transition-colors hover:border-primary/50 hover:text-foreground"
-          >
-            <span className="h-1.5 w-1.5 rounded-full bg-primary" />
-            <span className="font-medium text-foreground/90">Project Garage</span>
-          </Link>
+      <main
+        className={`relative mx-auto flex min-h-0 w-full max-w-2xl flex-1 flex-col px-5 ${
+          hasVisibleProductCards ? "pt-2" : "pt-6 sm:pt-8"
+        }`}
+      >
+        {!hasVisibleProductCards ? (
+          <header className="animate-fade-in shrink-0">
+            <Link
+              to="/"
+              className="group inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-card/50 px-3.5 py-1.5 text-xs text-muted-foreground backdrop-blur transition-colors hover:border-primary/50 hover:text-foreground"
+            >
+              <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+              <span className="font-medium text-foreground/90">Project Garage</span>
+            </Link>
 
-          <p className="mt-4 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            車両
-          </p>
-          <h1 className="mt-1 text-xl font-bold tracking-tight text-foreground sm:text-2xl">
-            {vehicleLabel}
-          </h1>
-        </header>
+            <p className="mt-4 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              車両
+            </p>
+            <h1 className="mt-1 text-xl font-bold tracking-tight text-foreground sm:text-2xl">
+              {vehicleLabel}
+            </h1>
+          </header>
+        ) : null}
 
-        <div ref={scrollRef} className="mt-6 min-h-0 flex-1 overflow-y-auto overscroll-contain">
+        <div
+          ref={scrollRef}
+          className={`min-h-0 flex-1 overflow-y-auto overscroll-contain ${
+            hasVisibleProductCards ? "mt-0" : "mt-6"
+          }`}
+        >
           <div
             className="flex flex-col gap-4"
             style={{ paddingBottom: scrollBottomPadding }}
+          >
+          <div
+            className={`flex flex-col gap-4 ${hasVisibleProductCards ? "hidden" : ""}`}
+            aria-hidden={hasVisibleProductCards}
           >
             {messages.map((message) => (
               <div
@@ -426,8 +495,9 @@ function ConsultPage() {
                 </div>
               </div>
             )}
+          </div>
 
-            {showRecommendations ? (
+          {showRecommendations ? (
               <ProductRecommendationSection
                 items={recommendations.items}
                 loading={recommendations.loading}
@@ -442,9 +512,13 @@ function ConsultPage() {
       </main>
 
       <div className="shrink-0 border-t border-border/60 bg-background/85 pb-[max(0px,env(safe-area-inset-bottom))] backdrop-blur-xl">
-        <div className="mx-auto max-w-2xl px-5 py-3 sm:py-4">
+        <div
+          className={`mx-auto max-w-2xl px-5 ${
+            hasVisibleProductCards ? "py-2 sm:py-3" : "py-3 sm:py-4"
+          }`}
+        >
           {errorMsg && <p className="mb-2 text-sm text-destructive">{errorMsg}</p>}
-          {showSummary && summary && (
+          {showSummary && summary && !hasVisibleProductCards && (
             <CompactSummaryCard
               summary={summary}
               budgetLabel={budgetLabel}
