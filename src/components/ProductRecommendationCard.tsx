@@ -38,7 +38,7 @@ export function ProductRecommendationCard({ item }: ProductRecommendationCardPro
       href={detailHref}
       onClick={handleNavigate}
       aria-label={`${item.name} の商品詳細を見る`}
-      className="group flex min-w-0 flex-col overflow-hidden rounded-2xl border border-border/80 bg-card/60 shadow-sm backdrop-blur transition-colors hover:border-primary/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+      className="group flex min-w-0 select-none flex-col overflow-hidden rounded-2xl border border-border/80 bg-card/60 shadow-sm backdrop-blur transition-colors hover:border-primary/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
     >
       {item.imageUrl ? (
         <div className="aspect-[4/3] w-full overflow-hidden border-b border-border/60 bg-muted/20">
