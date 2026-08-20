@@ -484,7 +484,7 @@ function ConsultPage() {
         ref={footerRef}
         className="pointer-events-none fixed inset-x-0 bottom-0 z-30 border-t border-border/60 bg-background/85 pb-[max(0px,env(safe-area-inset-bottom))] backdrop-blur-xl"
       >
-        <div className="pointer-events-auto mx-auto max-w-2xl px-5 py-3 sm:py-4">
+        <div className="pointer-events-none mx-auto max-w-2xl px-5 py-3 sm:py-4">
           {errorMsg && <p className="mb-2 text-sm text-destructive">{errorMsg}</p>}
           {showSummary && summary && (
             <CompactSummaryCard
@@ -493,7 +493,7 @@ function ConsultPage() {
               priorityLabels={priorityLabels}
             />
           )}
-          <div className="mb-3 flex flex-wrap gap-2">
+          <div className="pointer-events-auto mb-3 flex flex-wrap gap-2">
             {CHIPS.map((chip) => (
               <button
                 key={chip}
@@ -507,7 +507,7 @@ function ConsultPage() {
             ))}
           </div>
 
-          <div className="rounded-2xl border border-border/80 bg-card/60 p-2 backdrop-blur transition-all focus-within:border-primary/60 focus-within:glow-blue">
+          <div className="pointer-events-auto rounded-2xl border border-border/80 bg-card/60 p-2 backdrop-blur transition-all focus-within:border-primary/60 focus-within:glow-blue">
             <div className="flex items-end gap-2">
               <textarea
                 ref={inputRef}
