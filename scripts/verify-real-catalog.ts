@@ -4,7 +4,7 @@
  * Usage:
  *   MIGRATE_URL=... npm run db:verify:real-catalog
  */
-import { count, eq } from "drizzle-orm";
+import { and, count, eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 
@@ -34,12 +34,12 @@ const vehicle = { maker: "Toyota", model: "Voxy", series: "90 Series" };
 const [{ value: realActiveTotal }] = await db
   .select({ value: count() })
   .from(products)
-  .where(eq(products.isActive, true));
+  .where(and(eq(products.isActive, true), eq(products.isDemo, false)));
 
 const [{ value: demoActiveTotal }] = await db
   .select({ value: count() })
   .from(products)
-  .where(eq(products.isDemo, true));
+  .where(and(eq(products.isActive, true), eq(products.isDemo, true)));
 
 console.log("--- real catalog counts ---");
 console.log(`active real products: ${realActiveTotal}`);
@@ -116,19 +116,26 @@ assert(
   "Voxy 90 wheel recommendation contains an unknown/incompatible vehicle status",
 );
 
-const voxyCompatRows = await db
+const realVoxyRows = await db
   .select({ productId: productVehicleCompatibilities.productId, fitmentType: productVehicleCompatibilities.fitmentType })
   .from(productVehicleCompatibilities)
   .innerJoin(products, eq(products.id, productVehicleCompatibilities.productId))
-  .where(eq(products.isActive, true));
+  .where(
+    and(
+      eq(products.isActive, true),
+      eq(products.isDemo, false),
+      eq(productVehicleCompatibilities.maker, vehicle.maker),
+      eq(productVehicleCompatibilities.model, vehicle.model),
+      eq(productVehicleCompatibilities.series, vehicle.series),
+    ),
+  );
 
-const realVoxyRows = voxyCompatRows.filter((row) => row.productId != null);
 const nullFitmentRows = realVoxyRows.filter((row) => row.fitmentType == null);
-assert(nullFitmentRows.length === 0, `active real compatibility rows with null fitment_type: ${nullFitmentRows.length}`);
+assert(nullFitmentRows.length === 0, `active real Voxy90 compatibility rows with null fitment_type: ${nullFitmentRows.length}`);
 
 console.log("\n--- verify summary ---");
 console.log("real catalog loads without demo products");
 console.log("Voxy 90 wheel recommendation returns at least one real compatible product");
-console.log("all active real compatibility rows have fitment_type");
+console.log("all active real Voxy 90 compatibility rows have fitment_type");
 
 await client.end();
