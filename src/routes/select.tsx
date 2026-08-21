@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { ArrowRight, Car } from "lucide-react";
 import { GarageNav } from "../components/GarageNav";
+import { useClearConsultSessionOnMount } from "@/lib/consult/use-clear-consult-session-on-mount";
 import { MAKERS, MODELS, YEARS } from "@/lib/car-data";
 
 export const Route = createFileRoute("/select")({
@@ -19,6 +20,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 }
 
 function SelectCar() {
+  useClearConsultSessionOnMount();
   const navigate = useNavigate();
   const [maker, setMaker] = useState("");
   const [model, setModel] = useState("");

@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { Search, ChevronRight, Check } from "lucide-react";
 import { GarageNav } from "../components/GarageNav";
+import { useClearConsultSessionOnMount } from "@/lib/consult/use-clear-consult-session-on-mount";
 import { getAnswer } from "@/lib/answer.functions";
 
 type Search = { maker?: string; model?: string; year?: string; q?: string };
@@ -28,6 +29,7 @@ const CHECKLIST = [
 ];
 
 function AskPage() {
+  useClearConsultSessionOnMount();
   const navigate = useNavigate();
   const search = Route.useSearch();
   const fetchAnswer = useServerFn(getAnswer);
