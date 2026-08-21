@@ -4,7 +4,8 @@
  * Usage:
  *   MIGRATE_URL=... npm run db:import:products -- path/to/products.csv
  *
- * Phase 8-1 is insert-only. Re-importing the same CSV creates duplicate rows.
+ * Phase 8-2B upserts rows with product_url; rows without product_url are insert-only.
+ * Re-importing the same product_url updates the existing row.
  */
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
@@ -40,6 +41,7 @@ try {
   const result = await importProductsFromCsv(createProductImportDb(db), csvText);
   console.log(`Import mode: ${PRODUCT_IMPORT_MODE}`);
   console.log(`Inserted products: ${result.insertedCount}`);
+  console.log(`Updated products: ${result.updatedCount}`);
   console.log(`Product IDs: ${result.productIds.join(", ")}`);
 } catch (error) {
   if (error instanceof ProductImportError) {

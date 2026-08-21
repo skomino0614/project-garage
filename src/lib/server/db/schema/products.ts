@@ -1,3 +1,4 @@
+import { sql } from "drizzle-orm";
 import {
   boolean,
   index,
@@ -6,6 +7,7 @@ import {
   pgTable,
   text,
   timestamp,
+  uniqueIndex,
   uuid,
 } from "drizzle-orm/pg-core";
 
@@ -38,5 +40,8 @@ export const products = pgTable(
     index("products_is_active_idx").on(table.isActive),
     index("products_is_demo_idx").on(table.isDemo),
     index("products_price_min_yen_idx").on(table.priceMinYen),
+    uniqueIndex("products_product_url_unique")
+      .on(table.productUrl)
+      .where(sql`${table.productUrl} is not null`),
   ],
 );

@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { FITMENT_TYPES } from "@/lib/product/constants";
+
 import { parseCsv, rowToRecord } from "./csv";
 
 export const COMPATIBILITY_CSV_HEADERS = [
@@ -8,6 +10,7 @@ export const COMPATIBILITY_CSV_HEADERS = [
   "model",
   "series",
   "note",
+  "fitment_type",
 ] as const;
 
 const emptyToUndefined = (value: unknown) => {
@@ -24,6 +27,10 @@ export const CompatibilityCsvRowSchema = z.object({
   model: z.string().trim().min(1),
   series: z.string().trim().min(1),
   note: z.preprocess(emptyToUndefined, z.string().trim().optional()),
+  fitment_type: z.preprocess(
+    emptyToUndefined,
+    z.enum(FITMENT_TYPES, { message: "fitment_type must be confirmed or reference" }).optional(),
+  ),
 });
 
 export type CompatibilityCsvRow = z.infer<typeof CompatibilityCsvRowSchema>;
@@ -121,6 +128,7 @@ export function toCompatibilityInsertValues(parsed: ParsedCompatibilityImportRow
     model: parsed.row.model,
     series: parsed.row.series,
     note: parsed.row.note ?? null,
+    fitmentType: parsed.row.fitment_type ?? null,
     carMasterId: null as string | null,
   };
 }

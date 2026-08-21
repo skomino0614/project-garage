@@ -1,2 +1,2 @@
-product_id,maker,model,series,note
-2c21248d-c742-40ae-8449-08f787f95178,Toyota,Voxy,90 Series,18インチ対応
+product_id,maker,model,series,note,fitment_type
+2c21248d-c742-40ae-8449-08f787f95178,Toyota,Voxy,90 Series,18インチ対応,reference

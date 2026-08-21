@@ -5,23 +5,14 @@ import { productVehicleCompatibilities, products } from "@/lib/server/db/schema"
 
 import type { CompatibilityImportDb } from "./compatibility-import";
 import type { ProductImportDb } from "./product-import";
+import { createProductUpsertTx } from "./product-upsert";
 
 type AppDb = PostgresJsDatabase<Record<string, unknown>>;
 
 export function createProductImportDb(db: AppDb): ProductImportDb {
   return {
     transaction: (fn) =>
-      db.transaction(async (tx) =>
-        fn({
-          insertProduct: async (values) => {
-            const [row] = await tx.insert(products).values(values).returning({ id: products.id });
-            if (!row) {
-              throw new Error("Failed to insert product");
-            }
-            return row;
-          },
-        }),
-      ),
+      db.transaction(async (tx) => fn(createProductUpsertTx(tx as AppDb))),
   };
 }
 
@@ -49,3 +40,5 @@ export function createCompatibilityImportDb(db: AppDb): CompatibilityImportDb {
       ),
   };
 }
+
+export { createProductUpsertTx };
