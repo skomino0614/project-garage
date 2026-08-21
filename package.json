@@ -18,6 +18,7 @@
     "db:import:products": "tsx scripts/import-products.ts",
     "db:import:compatibilities": "tsx scripts/import-compatibilities.ts",
     "db:verify:products": "tsx scripts/verify-product-matching.ts",
+    "db:verify:real-catalog": "tsx scripts/verify-real-catalog.ts",
     "db:test": "tsx scripts/test-db-connection.ts"
   },
   "dependencies": {
