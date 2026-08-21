@@ -74,9 +74,29 @@ describe("validateProductCsv", () => {
     expect(result.ok).toBe(false);
   });
 
-  it("rejects invalid URLs", () => {
+  it("normalizes invalid image_url to null instead of failing import", () => {
     const result = validateProductCsv(
       csvBody("ホイール,Test,Brand,100000,120000,,javascript:alert(1),,,"),
+    );
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.rows[0]?.row.image_url).toBeNull();
+    }
+  });
+
+  it("normalizes placeholder image_url to null", () => {
+    const result = validateProductCsv(
+      csvBody("ホイール,Test,Brand,100000,120000,,https://example.com/images/daytona.jpg,,,"),
+    );
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.rows[0]?.row.image_url).toBeNull();
+    }
+  });
+
+  it("rejects invalid product_url", () => {
+    const result = validateProductCsv(
+      csvBody("ホイール,Test,Brand,100000,120000,,,javascript:alert(1),,,"),
     );
     expect(result.ok).toBe(false);
   });

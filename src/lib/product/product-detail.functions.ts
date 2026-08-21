@@ -8,6 +8,7 @@ import {
   recordProductClickEvent,
 } from "./click-events";
 import { getSafeExternalUrl } from "./external-url";
+import { getSafeProductImageUrl } from "./product-image-url";
 import { fetchProductDetail } from "./product-detail";
 
 const ProductDetailInputSchema = z.object({
@@ -56,7 +57,7 @@ function toProductDetailResponse(
       description: product.description,
       priceMinYen: product.priceMinYen,
       priceMaxYen: product.priceMaxYen,
-      imageUrl: getSafeExternalUrl(product.imageUrl),
+      imageUrl: getSafeProductImageUrl(product.imageUrl),
       productUrl: getSafeExternalUrl(product.productUrl),
       purchaseUrl: getSafeExternalUrl(product.purchaseUrl),
       compatibilities: product.compatibilities,

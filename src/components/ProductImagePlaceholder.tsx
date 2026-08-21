@@ -5,7 +5,7 @@ type ProductImagePlaceholderProps = {
 
 export function ProductImagePlaceholder({
   className = "",
-  label = "画像なし（デモ商品）",
+  label = "商品画像なし",
 }: ProductImagePlaceholderProps) {
   return (
     <div
