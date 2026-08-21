@@ -54,14 +54,15 @@ function makeCandidate(
           maker: "Toyota",
           model: "Voxy",
           series: "90 Series",
+          fitmentType: "confirmed" as const,
           note: null,
           carMasterId: null,
         },
       ],
     },
     score: 90,
-    reasons: ["予算内", "見た目の優先度と一致", "スタイルと一致"],
-    vehicleCompatibility: "compatible",
+    reasons: ["車種適合", "予算内", "見た目の優先度と一致", "スタイルと一致"],
+    vehicleCompatibility: "confirmed",
     ...overrides,
   };
 }

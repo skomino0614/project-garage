@@ -137,7 +137,7 @@ export function formatCompatibilityLabel(
   vehicleCompatibility: ProductRecommendationDisplayItem["vehicleCompatibility"],
   compatibilities: ProductRecommendationCandidate["product"]["compatibilities"],
 ): string | null {
-  if (vehicleCompatibility !== "compatible") {
+  if (vehicleCompatibility !== "confirmed" && vehicleCompatibility !== "reference") {
     return null;
   }
 
@@ -147,7 +147,8 @@ export function formatCompatibilityLabel(
   }
 
   const series = first.series ? ` ${first.series}` : "";
-  return `登録適合: ${first.maker} ${first.model}${series}`;
+  const prefix = vehicleCompatibility === "reference" ? "参考適合" : "登録適合";
+  return `${prefix}: ${first.maker} ${first.model}${series}`;
 }
 
 /** CSS class names used for responsive recommendation grid (single column on mobile). */

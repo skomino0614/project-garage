@@ -23,6 +23,7 @@ export const VehicleCompatibilitySchema = z.object({
   maker: z.string().min(1),
   model: z.string().min(1),
   series: z.string().min(1).nullable(),
+  fitmentType: z.enum(["confirmed", "reference"]).nullable().optional(),
   note: z.string().nullable(),
   carMasterId: z.string().uuid().nullable(),
 });

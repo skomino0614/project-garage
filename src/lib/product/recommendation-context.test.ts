@@ -18,7 +18,7 @@ const sampleItem: ProductRecommendationDisplayItem = {
   purchaseUrl: null,
   style: "高級感",
   score: 88,
-  vehicleCompatibility: "compatible",
+  vehicleCompatibility: "confirmed",
   compatibilities: [
     {
       maker: "Toyota",

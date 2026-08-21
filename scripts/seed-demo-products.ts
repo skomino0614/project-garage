@@ -386,6 +386,7 @@ const compatibilityRows = demoProductIdList.map((productId) => ({
   maker: VEHICLE.maker,
   model: VEHICLE.model,
   series: VEHICLE.series,
+  fitmentType: "confirmed" as const,
   note: "90系Voxy向けデモ適合データ",
 }));
 

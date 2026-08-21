@@ -1,13 +1,15 @@
 import { describe, expect, it } from "vitest";
 
+import type { FitmentType } from "./constants";
 import type { ProductMatchInput } from "./match-types";
+import { MATCH_SCORE_MAX } from "./match-types";
 import {
   compareProductMatchResults,
   getVehicleCompatibilityStatus,
   rankProductMatches,
   scoreProductMatch,
 } from "./match";
-import type { Product } from "./types";
+import type { Product, VehicleCompatibility } from "./types";
 
 const baseVehicle = {
   maker: "Toyota",
@@ -29,6 +31,20 @@ const baseInput: ProductMatchInput = {
   },
 };
 
+function makeCompatibility(
+  overrides: Partial<VehicleCompatibility> = {},
+): VehicleCompatibility {
+  return {
+    maker: "Toyota",
+    model: "Voxy",
+    series: "90 Series",
+    fitmentType: "confirmed",
+    note: null,
+    carMasterId: null,
+    ...overrides,
+  };
+}
+
 function makeProduct(overrides: Partial<Product> & Pick<Product, "id" | "name">): Product {
   return {
     category: "ホイール",
@@ -48,7 +64,7 @@ function makeProduct(overrides: Partial<Product> & Pick<Product, "id" | "name">)
     style: "シンプル",
     tags: [],
     isActive: true,
-    compatibilities: [],
+    compatibilities: [makeCompatibility()],
     ...overrides,
   };
 }
@@ -76,15 +92,7 @@ describe("rankProductMatches", () => {
       },
       priceMinYen: 180_000,
       priceMaxYen: 200_000,
-      compatibilities: [
-        {
-          maker: "Toyota",
-          model: "Voxy",
-          series: "90 Series",
-          note: null,
-          carMasterId: null,
-        },
-      ],
+      compatibilities: [makeCompatibility({ fitmentType: "confirmed" })],
     });
 
     const weak = makeProduct({
@@ -98,23 +106,16 @@ describe("rankProductMatches", () => {
       },
       priceMinYen: 190_000,
       priceMaxYen: 200_000,
-      compatibilities: [
-        {
-          maker: "Toyota",
-          model: "Voxy",
-          series: "90 Series",
-          note: null,
-          carMasterId: null,
-        },
-      ],
+      compatibilities: [makeCompatibility({ fitmentType: "confirmed" })],
     });
 
     const results = rankProductMatches([weak, good], input);
 
     expect(results).toHaveLength(2);
     expect(results[0]?.product.id).toBe(good.id);
+    expect(results[0]?.score).toBeLessThanOrEqual(MATCH_SCORE_MAX);
     expect(results[0]?.reasons).toEqual(
-      expect.arrayContaining(["予算内", "見た目の優先度と一致", "乗り心地の条件と一致"]),
+      expect.arrayContaining(["車種適合", "予算内", "見た目の優先度と一致", "乗り心地の条件と一致"]),
     );
   });
 
@@ -128,30 +129,14 @@ describe("rankProductMatches", () => {
       id: "33333333-3333-4333-8333-333333333333",
       name: "Luxury Wheel",
       style: "高級感",
-      compatibilities: [
-        {
-          maker: "Toyota",
-          model: "Voxy",
-          series: "90 Series",
-          note: null,
-          carMasterId: null,
-        },
-      ],
+      compatibilities: [makeCompatibility({ fitmentType: "confirmed" })],
     });
 
     const sporty = makeProduct({
       id: "44444444-4444-4444-8444-444444444444",
       name: "Sporty Wheel",
       style: "スポーティ",
-      compatibilities: [
-        {
-          maker: "Toyota",
-          model: "Voxy",
-          series: "90 Series",
-          note: null,
-          carMasterId: null,
-        },
-      ],
+      compatibilities: [makeCompatibility({ fitmentType: "confirmed" })],
     });
 
     const results = rankProductMatches([sporty, luxury], input);
@@ -167,15 +152,7 @@ describe("rankProductMatches", () => {
       name: "Affordable Wheel",
       priceMinYen: 140_000,
       priceMaxYen: 150_000,
-      compatibilities: [
-        {
-          maker: "Toyota",
-          model: "Voxy",
-          series: "90 Series",
-          note: null,
-          carMasterId: null,
-        },
-      ],
+      compatibilities: [makeCompatibility({ fitmentType: "confirmed" })],
     });
 
     const expensive = makeProduct({
@@ -183,15 +160,7 @@ describe("rankProductMatches", () => {
       name: "Expensive Wheel",
       priceMinYen: 280_000,
       priceMaxYen: 300_000,
-      compatibilities: [
-        {
-          maker: "Toyota",
-          model: "Voxy",
-          series: "90 Series",
-          note: null,
-          carMasterId: null,
-        },
-      ],
+      compatibilities: [makeCompatibility({ fitmentType: "confirmed" })],
     });
 
     const results = rankProductMatches([expensive, affordable], baseInput);
@@ -200,19 +169,11 @@ describe("rankProductMatches", () => {
     expect(results[0]?.product.id).toBe(affordable.id);
   });
 
-  it("Test 4: ranks explicit Voxy 90 Series fitment above unknown compatibility", () => {
-    const compatible = makeProduct({
+  it("Test 4: ranks confirmed Voxy 90 Series fitment above unknown compatibility", () => {
+    const confirmedProduct = makeProduct({
       id: "77777777-7777-4777-8777-777777777777",
       name: "Voxy Fit Wheel",
-      compatibilities: [
-        {
-          maker: "Toyota",
-          model: "Voxy",
-          series: "90 Series",
-          note: null,
-          carMasterId: null,
-        },
-      ],
+      compatibilities: [makeCompatibility({ fitmentType: "confirmed" })],
     });
 
     const unknown = makeProduct({
@@ -221,10 +182,10 @@ describe("rankProductMatches", () => {
       compatibilities: [],
     });
 
-    const results = rankProductMatches([unknown, compatible], baseInput);
+    const results = rankProductMatches([unknown, confirmedProduct], baseInput);
 
-    expect(results[0]?.product.id).toBe(compatible.id);
-    expect(results[0]?.vehicleCompatibility).toBe("compatible");
+    expect(results[0]?.product.id).toBe(confirmedProduct.id);
+    expect(results[0]?.vehicleCompatibility).toBe("confirmed");
     expect(results[1]?.vehicleCompatibility).toBe("unknown");
   });
 
@@ -233,30 +194,14 @@ describe("rankProductMatches", () => {
       id: "99999999-9999-4999-8999-999999999999",
       name: "Wheel Product",
       category: "ホイール",
-      compatibilities: [
-        {
-          maker: "Toyota",
-          model: "Voxy",
-          series: "90 Series",
-          note: null,
-          carMasterId: null,
-        },
-      ],
+      compatibilities: [makeCompatibility({ fitmentType: "confirmed" })],
     });
 
     const dashcam = makeProduct({
       id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
       name: "Dashcam Product",
       category: "ドラレコ",
-      compatibilities: [
-        {
-          maker: "Toyota",
-          model: "Voxy",
-          series: "90 Series",
-          note: null,
-          carMasterId: null,
-        },
-      ],
+      compatibilities: [makeCompatibility({ fitmentType: "confirmed" })],
     });
 
     const results = rankProductMatches([wheel, dashcam], baseInput);
@@ -295,15 +240,7 @@ describe("rankProductMatches", () => {
         practicality: "medium",
         resale: "medium",
       },
-      compatibilities: [
-        {
-          maker: "Toyota",
-          model: "Voxy",
-          series: "90 Series",
-          note: null,
-          carMasterId: null,
-        },
-      ],
+      compatibilities: [makeCompatibility({ fitmentType: "confirmed" })],
     });
 
     const lowAppearance = makeProduct({
@@ -315,15 +252,7 @@ describe("rankProductMatches", () => {
         practicality: "medium",
         resale: "medium",
       },
-      compatibilities: [
-        {
-          maker: "Toyota",
-          model: "Voxy",
-          series: "90 Series",
-          note: null,
-          carMasterId: null,
-        },
-      ],
+      compatibilities: [makeCompatibility({ fitmentType: "confirmed" })],
     });
 
     const unknownResults = rankProductMatches(
@@ -346,30 +275,14 @@ describe("rankProductMatches", () => {
       id: "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
       name: "Luxury Wheel",
       style: "高級感",
-      compatibilities: [
-        {
-          maker: "Toyota",
-          model: "Voxy",
-          series: "90 Series",
-          note: null,
-          carMasterId: null,
-        },
-      ],
+      compatibilities: [makeCompatibility({ fitmentType: "confirmed" })],
     });
 
     const sporty = makeProduct({
       id: "dddddddd-dddd-4ddd-8ddd-dddddddddddd",
       name: "Sporty Wheel",
       style: "スポーティ",
-      compatibilities: [
-        {
-          maker: "Toyota",
-          model: "Voxy",
-          series: "90 Series",
-          note: null,
-          carMasterId: null,
-        },
-      ],
+      compatibilities: [makeCompatibility({ fitmentType: "confirmed" })],
     });
 
     const withStyle = rankProductMatches([sporty, luxury], {
@@ -389,29 +302,13 @@ describe("rankProductMatches", () => {
     const productA = makeProduct({
       id: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee",
       name: "Wheel A",
-      compatibilities: [
-        {
-          maker: "Toyota",
-          model: "Voxy",
-          series: "90 Series",
-          note: null,
-          carMasterId: null,
-        },
-      ],
+      compatibilities: [makeCompatibility({ fitmentType: "confirmed" })],
     });
 
     const productB = makeProduct({
       id: "ffffffff-ffff-4fff-8fff-ffffffffffff",
       name: "Wheel B",
-      compatibilities: [
-        {
-          maker: "Toyota",
-          model: "Voxy",
-          series: "90 Series",
-          note: null,
-          carMasterId: null,
-        },
-      ],
+      compatibilities: [makeCompatibility({ fitmentType: "confirmed" })],
     });
 
     const firstRun = rankProductMatches([productB, productA], baseInput);
@@ -434,15 +331,7 @@ describe("rankProductMatches", () => {
       name: "Far Over Budget Wheel",
       priceMinYen: 350_000,
       priceMaxYen: 400_000,
-      compatibilities: [
-        {
-          maker: "Toyota",
-          model: "Voxy",
-          series: "90 Series",
-          note: null,
-          carMasterId: null,
-        },
-      ],
+      compatibilities: [makeCompatibility({ fitmentType: "confirmed" })],
     });
 
     const result = scoreProductMatch(overBudget, baseInput);
@@ -456,13 +345,12 @@ describe("getVehicleCompatibilityStatus", () => {
       id: "12121212-1212-4121-8121-121212121212",
       name: "Other Vehicle Wheel",
       compatibilities: [
-        {
+        makeCompatibility({
           maker: "Honda",
           model: "Stepwgn",
           series: "6th Gen",
-          note: null,
-          carMasterId: null,
-        },
+          fitmentType: "confirmed",
+        }),
       ],
     });
 
@@ -477,5 +365,126 @@ describe("getVehicleCompatibilityStatus", () => {
     });
 
     expect(getVehicleCompatibilityStatus(product, baseVehicle)).toBe("unknown");
+  });
+
+  it("returns confirmed when matching row has fitmentType confirmed", () => {
+    const product = makeProduct({
+      id: "14141414-1414-4141-8141-141414141414",
+      name: "Confirmed Wheel",
+      compatibilities: [makeCompatibility({ fitmentType: "confirmed" })],
+    });
+
+    expect(getVehicleCompatibilityStatus(product, baseVehicle)).toBe("confirmed");
+  });
+
+  it("returns reference when matching row has fitmentType reference", () => {
+    const product = makeProduct({
+      id: "15151515-1515-4151-8151-151515151515",
+      name: "Reference Wheel",
+      compatibilities: [makeCompatibility({ fitmentType: "reference" })],
+    });
+
+    expect(getVehicleCompatibilityStatus(product, baseVehicle)).toBe("reference");
+  });
+
+  it("returns unknown when matching row has null fitmentType", () => {
+    const product = makeProduct({
+      id: "16161616-1616-4161-8161-161616161616",
+      name: "Unclassified Wheel",
+      compatibilities: [makeCompatibility({ fitmentType: null })],
+    });
+
+    expect(getVehicleCompatibilityStatus(product, baseVehicle)).toBe("unknown");
+  });
+
+  it("prefers confirmed over reference when both exist", () => {
+    const product = makeProduct({
+      id: "17171717-1717-4171-8171-171717171717",
+      name: "Mixed Wheel",
+      compatibilities: [
+        makeCompatibility({ fitmentType: "reference" }),
+        makeCompatibility({ fitmentType: "confirmed", series: "80 Series" }),
+        makeCompatibility({ fitmentType: "confirmed" }),
+      ],
+    });
+
+    expect(getVehicleCompatibilityStatus(product, baseVehicle)).toBe("confirmed");
+  });
+});
+
+describe("Phase 8-2A match scoring", () => {
+  it("A: reference compatibility adds fitment score and stays within 100", () => {
+    const product = makeProduct({
+      id: "6db66b2d-3c44-47c9-881f-2a1d60d07e8c",
+      name: "Craft Collection VOUGE LIMITED",
+      priceMinYen: 69_300,
+      priceMaxYen: 93_500,
+      compatibilities: [makeCompatibility({ fitmentType: "reference" })],
+    });
+
+    const result = scoreProductMatch(product, baseInput);
+
+    expect(result).not.toBeNull();
+    expect(result?.vehicleCompatibility).toBe("reference");
+    expect(result?.reasons).toContain("参考適合");
+    expect(result?.reasons).toContain("予算内");
+    expect(result?.score).toBe(50);
+    expect(result?.score).toBeLessThanOrEqual(MATCH_SCORE_MAX);
+  });
+
+  it("B: confirmed scores higher than reference for the same product terms", () => {
+    const referenceProduct = makeProduct({
+      id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      name: "Reference Wheel",
+      compatibilities: [makeCompatibility({ fitmentType: "reference" })],
+    });
+
+    const confirmedProduct = makeProduct({
+      id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+      name: "Confirmed Wheel",
+      compatibilities: [makeCompatibility({ fitmentType: "confirmed" })],
+    });
+
+    const referenceResult = scoreProductMatch(referenceProduct, baseInput);
+    const confirmedResult = scoreProductMatch(confirmedProduct, baseInput);
+
+    expect(referenceResult?.score).toBe(50);
+    expect(confirmedResult?.score).toBe(60);
+    expect(confirmedResult!.score).toBeGreaterThan(referenceResult!.score);
+  });
+
+  it("C: unknown compatibility remains a candidate with zero fitment score and no fitment reason", () => {
+    const product = makeProduct({
+      id: "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
+      name: "Unknown Wheel",
+      compatibilities: [],
+    });
+
+    const result = scoreProductMatch(product, baseInput);
+
+    expect(result).not.toBeNull();
+    expect(result?.vehicleCompatibility).toBe("unknown");
+    expect(result?.score).toBe(25);
+    expect(result?.reasons).toEqual(["予算内"]);
+    expect(result?.reasons).not.toContain("車種適合");
+    expect(result?.reasons).not.toContain("参考適合");
+  });
+
+  it("D: incompatible Honda fitment is excluded for Voxy consultation", () => {
+    const product = makeProduct({
+      id: "dddddddd-dddd-4ddd-8ddd-dddddddddddd",
+      name: "Honda Wheel",
+      compatibilities: [
+        makeCompatibility({
+          maker: "Honda",
+          model: "Stepwgn",
+          series: "6th Gen",
+          fitmentType: "confirmed" as FitmentType,
+        }),
+      ],
+    });
+
+    expect(scoreProductMatch(product, baseInput)).toBeNull();
+    expect(rankProductMatches([product], baseInput)).toEqual([]);
   });
 });

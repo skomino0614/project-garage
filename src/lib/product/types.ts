@@ -1,4 +1,5 @@
 import type {
+  FitmentType,
   PriorityAttributeKey,
   PriorityLevel,
   ProductCategory,
@@ -10,6 +11,7 @@ export type VehicleCompatibility = {
   maker: string;
   model: string;
   series: string | null;
+  fitmentType: FitmentType | null;
   note: string | null;
   /** Optional link to car_masters when a canonical row exists (no duplicate vehicle specs). */
   carMasterId: string | null;

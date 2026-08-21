@@ -5,6 +5,7 @@ import {
   buildRecommendSystemPrompt,
   buildRecommendUserPrompt,
 } from "./prompts/recommend";
+import { buildCompatibilityCaution, resolveRecommendationCaution } from "./recommend-caution";
 import type {
   AiRecommendationItem,
   ConsultationForRecommendation,
@@ -15,8 +16,11 @@ import type {
 } from "./recommend-schemas";
 import { AiRecommendationOutputSchema } from "./recommend-schemas";
 
-const UNKNOWN_COMPATIBILITY_CAUTION =
-  "車種適合情報が登録されていないため、購入前に適合確認が必要です。";
+export { REFERENCE_COMPATIBILITY_CAUTION, UNKNOWN_COMPATIBILITY_CAUTION } from "./recommend-caution";
+export {
+  isContradictoryConfirmedCaution,
+  isMissingFitmentCaution,
+} from "./recommend-caution";
 
 export function matchResultToCandidate(
   result: ProductMatchResult,
@@ -38,15 +42,6 @@ export function matchResultToCandidate(
     reasons: result.reasons,
     vehicleCompatibility: result.vehicleCompatibility,
   };
-}
-
-function buildCompatibilityCaution(
-  candidate: ProductRecommendationCandidate,
-): string | null {
-  if (candidate.vehicleCompatibility === "unknown") {
-    return UNKNOWN_COMPATIBILITY_CAUTION;
-  }
-  return null;
 }
 
 function buildReasonFromStructuredReasons(
@@ -124,9 +119,7 @@ export function sanitizeAiRecommendations(
       return buildFallbackRecommendation(candidate, consultation);
     }
 
-    const caution =
-      aiItem.caution?.trim() ||
-      buildCompatibilityCaution(candidate);
+    const caution = resolveRecommendationCaution(candidate, aiItem.caution);
 
     return {
       productId: candidate.product.id,

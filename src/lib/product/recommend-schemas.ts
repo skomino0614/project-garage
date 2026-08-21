@@ -20,10 +20,12 @@ export const ProductMatchReasonSchema = z.enum([
   "スタイルと一致",
   "タグと一致",
   "車種適合",
+  "参考適合",
 ]);
 
 export const VehicleCompatibilityStatusSchema = z.enum([
-  "compatible",
+  "confirmed",
+  "reference",
   "unknown",
   "incompatible",
 ]);

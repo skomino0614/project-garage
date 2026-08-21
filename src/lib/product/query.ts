@@ -49,10 +49,13 @@ function toProductAttributes(row: ProductRow): ProductAttributes {
 }
 
 function toVehicleCompatibility(row: CompatibilityRow): VehicleCompatibility {
+  const fitmentType = row.fitmentType;
   return {
     maker: row.maker,
     model: row.model,
     series: row.series,
+    fitmentType:
+      fitmentType === "confirmed" || fitmentType === "reference" ? fitmentType : null,
     note: row.note,
     carMasterId: row.carMasterId,
   };
