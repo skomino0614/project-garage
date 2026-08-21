@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { ArrowUp, ChevronRight } from "lucide-react";
@@ -21,6 +21,7 @@ import {
   saveConsultState,
   type StoredConsultState,
 } from "@/lib/consult/consult-state-storage";
+import { handleConsultLeave } from "@/lib/consult/handle-consult-leave";
 import { computeScrollTopForProductCard } from "@/lib/consult/consult-scroll";
 import type { ConsultationSummary } from "@/lib/consult/types";
 import {
@@ -143,6 +144,7 @@ function CompactSummaryCard({
 }
 
 function ConsultPage() {
+  const router = useRouter();
   const { maker, model, series } = Route.useSearch();
   const vehicleLabel = formatVehicleLabel(maker, model, series);
   const consultChatFn = useServerFn(consultChat);
@@ -286,9 +288,11 @@ function ConsultPage() {
 
   useEffect(() => {
     return () => {
-      persistConsultState(scrollRef.current?.scrollTop);
+      handleConsultLeave(router.state.location.pathname, () => {
+        persistConsultState(scrollRef.current?.scrollTop);
+      });
     };
-  }, [persistConsultState]);
+  }, [persistConsultState, router]);
 
   useEffect(() => {
     const scrollEl = scrollRef.current;
