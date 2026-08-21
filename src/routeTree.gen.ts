@@ -17,6 +17,7 @@ import { Route as AnswerRouteImport } from './routes/answer'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ProductsProductIdRouteImport } from './routes/products/$productId'
 import { Route as AuthCallbackRouteImport } from './routes/auth/callback'
+import { Route as AdminProductImportRouteImport } from './routes/admin/product-import'
 
 const SelectRoute = SelectRouteImport.update({
   id: '/select',
@@ -58,6 +59,11 @@ const AuthCallbackRoute = AuthCallbackRouteImport.update({
   path: '/auth/callback',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminProductImportRoute = AdminProductImportRouteImport.update({
+  id: '/admin/product-import',
+  path: '/admin/product-import',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -66,6 +72,7 @@ export interface FileRoutesByFullPath {
   '/consult': typeof ConsultRoute
   '/login': typeof LoginRoute
   '/select': typeof SelectRoute
+  '/admin/product-import': typeof AdminProductImportRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/products/$productId': typeof ProductsProductIdRoute
 }
@@ -76,6 +83,7 @@ export interface FileRoutesByTo {
   '/consult': typeof ConsultRoute
   '/login': typeof LoginRoute
   '/select': typeof SelectRoute
+  '/admin/product-import': typeof AdminProductImportRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/products/$productId': typeof ProductsProductIdRoute
 }
@@ -87,6 +95,7 @@ export interface FileRoutesById {
   '/consult': typeof ConsultRoute
   '/login': typeof LoginRoute
   '/select': typeof SelectRoute
+  '/admin/product-import': typeof AdminProductImportRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/products/$productId': typeof ProductsProductIdRoute
 }
@@ -99,6 +108,7 @@ export interface FileRouteTypes {
     | '/consult'
     | '/login'
     | '/select'
+    | '/admin/product-import'
     | '/auth/callback'
     | '/products/$productId'
   fileRoutesByTo: FileRoutesByTo
@@ -109,6 +119,7 @@ export interface FileRouteTypes {
     | '/consult'
     | '/login'
     | '/select'
+    | '/admin/product-import'
     | '/auth/callback'
     | '/products/$productId'
   id:
@@ -119,6 +130,7 @@ export interface FileRouteTypes {
     | '/consult'
     | '/login'
     | '/select'
+    | '/admin/product-import'
     | '/auth/callback'
     | '/products/$productId'
   fileRoutesById: FileRoutesById
@@ -130,6 +142,7 @@ export interface RootRouteChildren {
   ConsultRoute: typeof ConsultRoute
   LoginRoute: typeof LoginRoute
   SelectRoute: typeof SelectRoute
+  AdminProductImportRoute: typeof AdminProductImportRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
   ProductsProductIdRoute: typeof ProductsProductIdRoute
 }
@@ -192,6 +205,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthCallbackRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/product-import': {
+      id: '/admin/product-import'
+      path: '/admin/product-import'
+      fullPath: '/admin/product-import'
+      preLoaderRoute: typeof AdminProductImportRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -202,6 +222,7 @@ const rootRouteChildren: RootRouteChildren = {
   ConsultRoute: ConsultRoute,
   LoginRoute: LoginRoute,
   SelectRoute: SelectRoute,
+  AdminProductImportRoute: AdminProductImportRoute,
   AuthCallbackRoute: AuthCallbackRoute,
   ProductsProductIdRoute: ProductsProductIdRoute,
 }
