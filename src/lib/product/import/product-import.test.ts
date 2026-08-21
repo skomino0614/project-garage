@@ -139,17 +139,47 @@ describe("parseTags", () => {
 });
 
 describe("importProductsFromCsv", () => {
-  it("uses insert-only mode", async () => {
-    const inserts: Array<{ isDemo: boolean; name: string }> = [];
-    const db: ProductImportDb = {
-      transaction: async (fn) =>
+  const PRODUCT_URL = "https://example.com/products/wheel-a";
+  const EXISTING_ID = "22222222-2222-4222-8222-222222222222";
+
+  function createMockDb(handlers: {
+    insertProduct?: ProductImportDb["transaction"] extends (
+      fn: infer Tx,
+    ) => unknown
+      ? Tx extends (tx: infer T) => unknown
+        ? T extends { insertProduct: infer I }
+          ? I
+          : never
+        : never
+      : never;
+    findProductIdByProductUrl?: (url: string) => Promise<string | null>;
+    updateProductById?: (productId: string, values: unknown) => Promise<void>;
+  }) {
+    return {
+      transaction: async (fn: (tx: {
+        insertProduct: (values: unknown) => Promise<{ id: string }>;
+        findProductIdByProductUrl: (url: string) => Promise<string | null>;
+        updateProductById: (productId: string, values: unknown) => Promise<void>;
+      }) => Promise<void>) =>
         fn({
-          insertProduct: async (values) => {
-            inserts.push({ isDemo: values.isDemo, name: values.name });
-            return { id: "11111111-1111-4111-8111-111111111111" };
-          },
+          insertProduct:
+            handlers.insertProduct ??
+            (async () => ({ id: "11111111-1111-4111-8111-111111111111" })),
+          findProductIdByProductUrl:
+            handlers.findProductIdByProductUrl ?? (async () => null),
+          updateProductById: handlers.updateProductById ?? (async () => undefined),
         }),
-    };
+    } satisfies ProductImportDb;
+  }
+
+  it("uses upsert-by-product-url mode", async () => {
+    const inserts: Array<{ isDemo: boolean; name: string }> = [];
+    const db = createMockDb({
+      insertProduct: async (values) => {
+        inserts.push({ isDemo: values.isDemo, name: values.name });
+        return { id: "11111111-1111-4111-8111-111111111111" };
+      },
+    });
 
     const result = await importProductsFromCsv(
       db,
@@ -158,19 +188,69 @@ describe("importProductsFromCsv", () => {
 
     expect(result.mode).toBe(PRODUCT_IMPORT_MODE);
     expect(result.insertedCount).toBe(1);
+    expect(result.updatedCount).toBe(0);
     expect(inserts[0]?.isDemo).toBe(false);
+  });
+
+  it("updates existing product when product_url matches", async () => {
+    const inserts: unknown[] = [];
+    const updates: Array<{ productId: string; name: string }> = [];
+    const db = createMockDb({
+      findProductIdByProductUrl: async (url) =>
+        url === PRODUCT_URL ? EXISTING_ID : null,
+      insertProduct: async (values) => {
+        inserts.push(values);
+        return { id: "11111111-1111-4111-8111-111111111111" };
+      },
+      updateProductById: async (productId, values) => {
+        updates.push({ productId, name: (values as { name: string }).name });
+      },
+    });
+
+    const result = await importProductsFromCsv(
+      db,
+      csvBody(
+        `ホイール,Updated Wheel,Brand A,150000,180000,,,${PRODUCT_URL},,,,,,高級感,`,
+      ),
+    );
+
+    expect(result.insertedCount).toBe(0);
+    expect(result.updatedCount).toBe(1);
+    expect(result.productIds).toEqual([EXISTING_ID]);
+    expect(inserts).toHaveLength(0);
+    expect(updates).toEqual([{ productId: EXISTING_ID, name: "Updated Wheel" }]);
+  });
+
+  it("inserts duplicate-looking rows when product_url is null", async () => {
+    let insertCount = 0;
+    const db = createMockDb({
+      insertProduct: async () => {
+        insertCount += 1;
+        return { id: `11111111-1111-4111-8111-11111111111${insertCount}` };
+      },
+    });
+
+    const result = await importProductsFromCsv(
+      db,
+      csvBody(
+        "ホイール,Wheel One,Brand,150000,180000,,,,,,,,,高級感,",
+        "ホイール,Wheel Two,Brand,150000,180000,,,,,,,,,高級感,",
+      ),
+    );
+
+    expect(result.insertedCount).toBe(2);
+    expect(result.updatedCount).toBe(0);
+    expect(insertCount).toBe(2);
   });
 
   it("throws ProductImportError without inserting when validation fails", async () => {
     let inserted = false;
-    const db: ProductImportDb = {
-      transaction: async (fn) => {
+    const db = createMockDb({
+      insertProduct: async () => {
         inserted = true;
-        return fn({
-          insertProduct: async () => ({ id: "11111111-1111-4111-8111-111111111111" }),
-        });
+        return { id: "11111111-1111-4111-8111-111111111111" };
       },
-    };
+    });
 
     await expect(
       importProductsFromCsv(db, csvBody("ホイール,Bad,Brand,200000,100000")),
@@ -180,23 +260,15 @@ describe("importProductsFromCsv", () => {
 
   it("rolls back the transaction when a later insert fails", async () => {
     let insertCount = 0;
-    const db: ProductImportDb = {
-      transaction: async (fn) => {
-        try {
-          return await fn({
-            insertProduct: async () => {
-              insertCount += 1;
-              if (insertCount === 2) {
-                throw new Error("Simulated DB failure");
-              }
-              return { id: `11111111-1111-4111-8111-11111111111${insertCount}` };
-            },
-          });
-        } catch (error) {
-          throw error;
+    const db = createMockDb({
+      insertProduct: async () => {
+        insertCount += 1;
+        if (insertCount === 2) {
+          throw new Error("Simulated DB failure");
         }
+        return { id: `11111111-1111-4111-8111-11111111111${insertCount}` };
       },
-    };
+    });
 
     await expect(
       importProductsFromValidatedRows(db, [

@@ -1,7 +1,7 @@
 import { getDb } from "@/lib/server/db/client.server";
-import { products } from "@/lib/server/db/schema";
 
 import type { ProductImportCandidate } from "./build-candidate";
+import { createProductUpsertTx } from "./db-adapter";
 import { assertProductImportAdmin } from "./product-import-auth";
 import {
   createProductImportCandidateFromUrl,
@@ -28,17 +28,7 @@ export async function handleRegisterProductImportCandidate(data: RegisterProduct
   return registerProductCandidate(
     {
       transaction: (fn) =>
-        db.transaction(async (tx) =>
-          fn({
-            insertProduct: async (values) => {
-              const [row] = await tx.insert(products).values(values).returning({ id: products.id });
-              if (!row) {
-                throw new Error("Failed to insert product");
-              }
-              return row;
-            },
-          }),
-        ),
+        db.transaction(async (tx) => fn(createProductUpsertTx(tx))),
     },
     data,
   );

@@ -13,6 +13,11 @@ import { fetchAndExtractRawWebData } from "./fetch-page";
 import type { DnsLookupFn } from "./fetch-url-policy";
 import { tryEnhanceCandidateWithAi } from "./ai-extract-candidate";
 import type { ProductImportCandidate } from "./build-candidate";
+import {
+  persistProductRow,
+  type ProductCatalogValues,
+  type ProductImportTx,
+} from "./product-import";
 
 export async function createProductImportCandidateFromUrl(
   inputUrl: string,
@@ -109,12 +114,11 @@ export type RegisterCandidateDb = {
   transaction<T>(fn: (tx: RegisterCandidateTx) => Promise<T>): Promise<T>;
 };
 
-export type RegisterCandidateTx = {
-  insertProduct: (values: ReturnType<typeof registerInputToInsertValues>) => Promise<{ id: string }>;
-};
+export type RegisterCandidateTx = ProductImportTx;
 
 export type RegisterProductCandidateResult = {
   productId: string;
+  updated: boolean;
 };
 
 export async function registerProductCandidate(
@@ -122,14 +126,18 @@ export async function registerProductCandidate(
   input: RegisterProductCandidateInput,
 ): Promise<RegisterProductCandidateResult> {
   const parsed = RegisterProductCandidateSchema.parse(input);
+  const values: ProductCatalogValues = registerInputToInsertValues(parsed);
 
   let productId = "";
+  let updated = false;
+
   await db.transaction(async (tx) => {
-    const inserted = await tx.insertProduct(registerInputToInsertValues(parsed));
-    productId = inserted.id;
+    const result = await persistProductRow(tx, values);
+    productId = result.id;
+    updated = result.updated;
   });
 
-  return { productId };
+  return { productId, updated };
 }
 
 export class RegisterProductCandidateError extends Error {

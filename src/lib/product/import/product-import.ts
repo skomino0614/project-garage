@@ -294,39 +294,76 @@ export function toProductInsertValues(parsed: ParsedProductImportRow) {
   };
 }
 
-/** Phase 8-1 import is insert-only — no natural unique key exists on the current schema. */
-export const PRODUCT_IMPORT_MODE = "insert-only" as const;
+export type ProductCatalogValues = ReturnType<typeof toProductInsertValues>;
+
+/** Catalog fields updated on product_url re-import. Preserves is_demo and is_active. */
+export type ProductCatalogUpdateValues = Omit<ProductCatalogValues, "isDemo" | "isActive">;
+
+export function toProductUpdateValues(values: ProductCatalogValues): ProductCatalogUpdateValues {
+  const { isDemo: _isDemo, isActive: _isActive, ...updateValues } = values;
+  return updateValues;
+}
+
+/** Rows with product_url upsert; rows without product_url insert only. */
+export const PRODUCT_IMPORT_MODE = "upsert-by-product-url" as const;
 
 export type ProductImportDb = {
   transaction<T>(fn: (tx: ProductImportTx) => Promise<T>): Promise<T>;
 };
 
 export type ProductImportTx = {
-  insertProduct: (values: ReturnType<typeof toProductInsertValues>) => Promise<{ id: string }>;
+  insertProduct: (values: ProductCatalogValues) => Promise<{ id: string }>;
+  findProductIdByProductUrl: (productUrl: string) => Promise<string | null>;
+  updateProductById: (productId: string, values: ProductCatalogUpdateValues) => Promise<void>;
 };
 
 export type ProductImportResult = {
   mode: typeof PRODUCT_IMPORT_MODE;
   insertedCount: number;
+  updatedCount: number;
   productIds: string[];
 };
+
+export async function persistProductRow(
+  tx: ProductImportTx,
+  values: ProductCatalogValues,
+): Promise<{ id: string; updated: boolean }> {
+  if (values.productUrl) {
+    const existingId = await tx.findProductIdByProductUrl(values.productUrl);
+    if (existingId) {
+      await tx.updateProductById(existingId, toProductUpdateValues(values));
+      return { id: existingId, updated: true };
+    }
+  }
+
+  const inserted = await tx.insertProduct(values);
+  return { id: inserted.id, updated: false };
+}
 
 export async function importProductsFromValidatedRows(
   db: ProductImportDb,
   rows: ParsedProductImportRow[],
 ): Promise<ProductImportResult> {
   const productIds: string[] = [];
+  let insertedCount = 0;
+  let updatedCount = 0;
 
   await db.transaction(async (tx) => {
     for (const parsedRow of rows) {
-      const inserted = await tx.insertProduct(toProductInsertValues(parsedRow));
-      productIds.push(inserted.id);
+      const { id, updated } = await persistProductRow(tx, toProductInsertValues(parsedRow));
+      productIds.push(id);
+      if (updated) {
+        updatedCount += 1;
+      } else {
+        insertedCount += 1;
+      }
     }
   });
 
   return {
     mode: PRODUCT_IMPORT_MODE,
-    insertedCount: productIds.length,
+    insertedCount,
+    updatedCount,
     productIds,
   };
 }

@@ -36,6 +36,13 @@
       "when": 1787287200000,
       "tag": "0004_fitment_type",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1787373600000,
+      "tag": "0005_product_url_unique",
+      "breakpoints": true
     }
   ]
 }
