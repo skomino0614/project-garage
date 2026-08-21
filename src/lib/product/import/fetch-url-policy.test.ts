@@ -81,6 +81,26 @@ describe("validateResolvedAddresses", () => {
       ok: false,
       reason: "Resolved address 169.254.169.254 is not allowed",
     });
+
+    await expect(
+      validateResolvedAddresses(
+        "shop.example.com",
+        vi.fn(async () => [{ address: "::ffff:127.0.0.1", family: 6 }]),
+      ),
+    ).resolves.toEqual({
+      ok: false,
+      reason: "Resolved address ::ffff:127.0.0.1 is not allowed",
+    });
+
+    await expect(
+      validateResolvedAddresses(
+        "shop.example.com",
+        vi.fn(async () => [{ address: "::", family: 6 }]),
+      ),
+    ).resolves.toEqual({
+      ok: false,
+      reason: "Resolved address :: is not allowed",
+    });
   });
 
   it("accepts public resolved addresses", async () => {
@@ -111,8 +131,35 @@ describe("isBlockedIpAddress", () => {
     expect(isBlockedIpAddress("169.254.10.5")).toBe(true);
     expect(isBlockedIpAddress("169.254.169.254")).toBe(true);
     expect(isBlockedIpAddress("::1")).toBe(true);
+    expect(isBlockedIpAddress("::")).toBe(true);
     expect(isBlockedIpAddress("fc00::1")).toBe(true);
     expect(isBlockedIpAddress("fe80::1")).toBe(true);
     expect(isBlockedIpAddress("8.8.8.8")).toBe(false);
+  });
+
+  it("blocks IPv4-mapped IPv6 addresses that embed private IPv4", () => {
+    expect(isBlockedIpAddress("::ffff:127.0.0.1")).toBe(true);
+    expect(isBlockedIpAddress("::ffff:10.0.0.1")).toBe(true);
+    expect(isBlockedIpAddress("::ffff:192.168.1.1")).toBe(true);
+    expect(isBlockedIpAddress("::ffff:169.254.169.254")).toBe(true);
+    expect(isBlockedIpAddress("0:0:0:0:0:ffff:127.0.0.1")).toBe(true);
+  });
+
+  it("allows IPv4-mapped IPv6 addresses that embed public IPv4", () => {
+    expect(isBlockedIpAddress("::ffff:8.8.8.8")).toBe(false);
+    expect(isBlockedIpAddress("::ffff:93.184.216.34")).toBe(false);
+  });
+});
+
+describe("validateFetchableUrl IPv6 SSRF", () => {
+  it("rejects unspecified and IPv4-mapped private IPv6 literal hosts", () => {
+    expect(validateFetchableUrl("http://[::]/item").ok).toBe(false);
+    expect(validateFetchableUrl("http://[::ffff:127.0.0.1]/item").ok).toBe(false);
+    expect(validateFetchableUrl("http://[::ffff:192.168.1.1]/item").ok).toBe(false);
+    expect(validateFetchableUrl("http://[::ffff:169.254.169.254]/item").ok).toBe(false);
+  });
+
+  it("accepts IPv4-mapped public IPv6 literal hosts", () => {
+    expect(validateFetchableUrl("http://[::ffff:8.8.8.8]/item").ok).toBe(true);
   });
 });
