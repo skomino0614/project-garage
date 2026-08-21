@@ -12,7 +12,7 @@ import {
 import type { ProductRecommendationDisplayItem } from "@/lib/product/recommend-schemas";
 import { saveProductRecommendationContext } from "@/lib/product/recommendation-context";
 
-import { ProductImagePlaceholder } from "./ProductImagePlaceholder";
+import { ProductImage } from "./ProductImage";
 
 type ProductRecommendationCardProps = {
   item: ProductRecommendationDisplayItem;
@@ -40,18 +40,10 @@ export function ProductRecommendationCard({ item }: ProductRecommendationCardPro
       aria-label={`${item.name} の商品詳細を見る`}
       className="group flex min-w-0 select-none flex-col overflow-hidden rounded-2xl border border-border/80 bg-card/60 shadow-sm backdrop-blur transition-colors hover:border-primary/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
     >
-      {item.imageUrl ? (
-        <div className="aspect-[4/3] w-full overflow-hidden border-b border-border/60 bg-muted/20">
-          <img
-            src={item.imageUrl}
-            alt=""
-            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
-            loading="lazy"
-          />
-        </div>
-      ) : (
-        <ProductImagePlaceholder />
-      )}
+      <ProductImage
+        imageUrl={item.imageUrl}
+        imageClassName="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+      />
 
       <div className="flex flex-1 flex-col gap-3 p-4">
         <div className="space-y-1">

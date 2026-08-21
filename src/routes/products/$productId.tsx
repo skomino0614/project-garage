@@ -4,7 +4,7 @@ import { ArrowLeft, ExternalLink } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 import { GarageNav } from "@/components/GarageNav";
-import { ProductImagePlaceholder } from "@/components/ProductImagePlaceholder";
+import { ProductImage } from "@/components/ProductImage";
 import {
   formatCompatibilityLabel,
   formatMatchScore,
@@ -155,18 +155,7 @@ function ProductDetailPage() {
         </Link>
 
         <article className="overflow-hidden rounded-3xl border border-border/80 bg-card/60 shadow-sm backdrop-blur">
-          {product.imageUrl ? (
-            <div className="aspect-[4/3] w-full overflow-hidden border-b border-border/60 bg-muted/20">
-              <img
-                src={product.imageUrl}
-                alt=""
-                className="h-full w-full object-cover"
-                loading="lazy"
-              />
-            </div>
-          ) : (
-            <ProductImagePlaceholder />
-          )}
+          <ProductImage imageUrl={product.imageUrl} />
 
           <div className="space-y-6 p-6 sm:p-8">
             {isInactive ? (

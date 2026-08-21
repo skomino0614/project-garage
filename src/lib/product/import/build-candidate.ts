@@ -1,5 +1,6 @@
 import type { PriorityLevel, ProductCategory, ProductStyle } from "@/lib/product/constants";
 import { getSafeExternalUrl } from "@/lib/product/external-url";
+import { getSafeProductImageUrl } from "@/lib/product/product-image-url";
 
 import type { RawWebExtract } from "./html-extract";
 import { isGenericSiteDescription } from "./html-extract-product-page";
@@ -69,7 +70,7 @@ export function buildCandidateFromRawExtract(raw: RawWebExtract): ProductImportC
   const name = cleanProductName(raw, jsonLd?.name);
   const brand = jsonLd?.brand ?? raw.brandFromTitle ?? null;
   const description = pickDescription(raw, jsonLd?.description);
-  const imageUrl = getSafeExternalUrl(raw.productImageUrl ?? jsonLd?.imageUrl ?? null);
+  const imageUrl = getSafeProductImageUrl(raw.productImageUrl ?? jsonLd?.imageUrl ?? null);
   const productUrl = getSafeExternalUrl(raw.canonicalUrl ?? raw.sourceUrl);
 
   const prices = raw.tablePrices.length > 0 ? raw.tablePrices : (jsonLd?.prices ?? []);

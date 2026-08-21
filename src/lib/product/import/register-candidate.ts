@@ -6,6 +6,7 @@ import {
   PRODUCT_STYLES,
 } from "@/lib/product/constants";
 import { getSafeExternalUrl } from "@/lib/product/external-url";
+import { getSafeProductImageUrl } from "@/lib/product/product-image-url";
 
 import { buildCandidateFromRawExtract } from "./build-candidate";
 import { fetchAndExtractRawWebData } from "./fetch-page";
@@ -45,6 +46,11 @@ const optionalUrlSchema = z
   .nullable()
   .transform((value) => getSafeExternalUrl(value));
 
+const optionalProductImageUrlSchema = z
+  .string()
+  .nullable()
+  .transform((value) => getSafeProductImageUrl(value));
+
 export const RegisterProductCandidateSchema = z
   .object({
     sourceUrl: z.string().min(1),
@@ -54,7 +60,7 @@ export const RegisterProductCandidateSchema = z
     description: z.string().trim().nullable(),
     priceMinYen: z.number().int().positive(),
     priceMaxYen: z.number().int().positive(),
-    imageUrl: optionalUrlSchema,
+    imageUrl: optionalProductImageUrlSchema,
     productUrl: optionalUrlSchema,
     purchaseUrl: optionalUrlSchema,
     category: ProductCategorySchema,

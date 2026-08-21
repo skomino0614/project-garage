@@ -6,6 +6,7 @@ import {
   PRODUCT_STYLES,
 } from "@/lib/product/constants";
 import { getSafeExternalUrl } from "@/lib/product/external-url";
+import { getSafeProductImageUrl } from "@/lib/product/product-image-url";
 
 import { parseCsv, rowToRecord } from "./csv";
 
@@ -38,6 +39,14 @@ const emptyToUndefined = (value: unknown) => {
   const trimmed = value.trim();
   return trimmed === "" ? undefined : trimmed;
 };
+
+const optionalProductImageUrlSchema = z.preprocess(
+  emptyToUndefined,
+  z
+    .string()
+    .optional()
+    .transform((value) => getSafeProductImageUrl(value ?? null)),
+);
 
 const optionalUrlSchema = z.preprocess(
   emptyToUndefined,
@@ -80,7 +89,7 @@ export const ProductCsvRowSchema = z
     price_min_yen: yenSchema,
     price_max_yen: yenSchema,
     description: z.preprocess(emptyToUndefined, z.string().trim().optional()),
-    image_url: optionalUrlSchema,
+    image_url: optionalProductImageUrlSchema,
     product_url: optionalUrlSchema,
     purchase_url: optionalUrlSchema,
     appearance: optionalPrioritySchema,
@@ -271,7 +280,7 @@ export function toProductInsertValues(parsed: ParsedProductImportRow) {
     description: row.description ?? null,
     priceMinYen: row.price_min_yen,
     priceMaxYen: row.price_max_yen,
-    imageUrl: row.image_url,
+    imageUrl: getSafeProductImageUrl(row.image_url),
     productUrl: row.product_url,
     purchaseUrl: row.purchase_url,
     appearance: row.appearance,

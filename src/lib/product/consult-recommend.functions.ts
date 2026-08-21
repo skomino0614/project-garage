@@ -11,6 +11,7 @@ import {
   type RecommendProductsForConsultationOutput,
 } from "./recommend-schemas";
 import { fetchActiveProductsWithCompatibilities } from "./query";
+import { getSafeProductImageUrl } from "./product-image-url";
 
 export const recommendProductsForConsultation = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => RecommendProductsForConsultationInputSchema.parse(data))
@@ -48,7 +49,7 @@ export const recommendProductsForConsultation = createServerFn({ method: "POST" 
         recommendations,
         matchResults.map((result) => ({
           id: result.product.id,
-          imageUrl: result.product.imageUrl,
+          imageUrl: getSafeProductImageUrl(result.product.imageUrl),
           productUrl: result.product.productUrl,
           purchaseUrl: result.product.purchaseUrl,
         })),
