@@ -1,5 +1,17 @@
 import { getSafeExternalUrl } from "@/lib/product/external-url";
 
+import {
+  extractBrandFromTitle,
+  extractPricesFromHtml,
+  extractProductDescription,
+  extractProductImageUrl,
+  extractProductNameFromTitle,
+  extractSpecTags,
+  extractTablePrices,
+  isGenericSiteDescription,
+  parseYen,
+} from "./html-extract-product-page";
+
 export type JsonLdProductExtract = {
   name: string | null;
   brand: string | null;
@@ -21,6 +33,12 @@ export type RawWebExtract = {
   jsonLdProducts: JsonLdProductExtract[];
   purchaseLinks: string[];
   visibleTextSample: string | null;
+  tablePrices: number[];
+  productDescription: string | null;
+  productImageUrl: string | null;
+  specTags: string[];
+  brandFromTitle: string | null;
+  productNameFromTitle: string | null;
 };
 
 function decodeHtmlEntities(value: string): string {
@@ -158,24 +176,6 @@ function readImage(value: unknown): string | null {
   return null;
 }
 
-function parseYen(value: unknown): number | null {
-  if (typeof value === "number" && Number.isFinite(value)) {
-    return Math.round(value);
-  }
-
-  if (typeof value !== "string") {
-    return null;
-  }
-
-  const normalized = value.replace(/[,\s円¥]/g, "");
-  const match = normalized.match(/(\d+(?:\.\d+)?)/);
-  if (!match) {
-    return null;
-  }
-
-  return Math.round(Number(match[1]));
-}
-
 function readOffers(node: Record<string, unknown>): { prices: number[]; purchaseUrl: string | null } {
   const offers = node.offers;
   const offerList = Array.isArray(offers) ? offers : offers ? [offers] : [];
@@ -220,7 +220,7 @@ function extractJsonLdProduct(node: unknown): JsonLdProductExtract | null {
   };
 }
 
-function readPurchaseLinks(html: string, sourceUrl: string): string[] {
+function readPurchaseLinks(html: string): string[] {
   const links = new Set<string>();
   const pattern = /<a[^>]+href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi;
   let match: RegExpExecArray | null = pattern.exec(html);
@@ -253,19 +253,44 @@ export function extractRawWebData(html: string, sourceUrl: string, fetchedAt = n
     .map(extractJsonLdProduct)
     .filter((product): product is JsonLdProductExtract => product !== null);
 
+  const title = readTitle(html);
+  const ogImage = getSafeExternalUrl(readMetaContent(html, "property", "og:image"));
+  const jsonLd = jsonLdProducts[0] ?? null;
+  const jsonLdPrices = jsonLdProducts.flatMap((product) => product.prices);
+  const tablePrices = extractTablePrices(html);
+  const allPrices = extractPricesFromHtml(html, jsonLdPrices);
+
   const bodyText = stripTags(html.replace(/<script[\s\S]*?<\/script>/gi, " ").replace(/<style[\s\S]*?<\/style>/gi, " "));
 
   return {
     sourceUrl,
     fetchedAt,
-    title: readTitle(html),
+    title,
     metaDescription: readMetaContent(html, "name", "description"),
     ogTitle: readMetaContent(html, "property", "og:title"),
     ogDescription: readMetaContent(html, "property", "og:description"),
-    ogImage: getSafeExternalUrl(readMetaContent(html, "property", "og:image")),
+    ogImage,
     canonicalUrl: readCanonical(html),
     jsonLdProducts,
-    purchaseLinks: readPurchaseLinks(html, sourceUrl),
+    purchaseLinks: readPurchaseLinks(html),
     visibleTextSample: bodyText.slice(0, 4000) || null,
+    tablePrices: allPrices.length > 0 ? allPrices : tablePrices,
+    productDescription: extractProductDescription(html),
+    productImageUrl: extractProductImageUrl(sourceUrl, {
+      jsonLdImageUrl: jsonLd?.imageUrl,
+      ogImage,
+      html,
+    }),
+    specTags: extractSpecTags(html),
+    brandFromTitle: extractBrandFromTitle(title),
+    productNameFromTitle: extractProductNameFromTitle(title),
   };
 }
+
+export {
+  extractTablePrices,
+  extractSpecTags,
+  extractProductDescription,
+  extractProductImageUrl,
+  isGenericSiteDescription,
+} from "./html-extract-product-page";

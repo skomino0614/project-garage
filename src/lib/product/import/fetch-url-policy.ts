@@ -54,9 +54,57 @@ function normalizeIpv6(address: string): string {
   return address.toLowerCase().replace(/^\[(.*)\]$/, "$1");
 }
 
+function parseIpv4MappedIpv6(address: string): string | null {
+  const normalized = normalizeIpv6(address);
+
+  if (normalized.startsWith("::ffff:")) {
+    const suffix = normalized.slice("::ffff:".length);
+    const dotted = parseIpv4Literal(suffix);
+    if (dotted) {
+      return suffix;
+    }
+
+    const hexParts = suffix.split(":");
+    if (hexParts.length === 2) {
+      const hi = Number.parseInt(hexParts[0] ?? "", 16);
+      const lo = Number.parseInt(hexParts[1] ?? "", 16);
+      if (
+        Number.isInteger(hi) &&
+        Number.isInteger(lo) &&
+        hi >= 0 &&
+        hi <= 0xffff &&
+        lo >= 0 &&
+        lo <= 0xffff
+      ) {
+        return `${(hi >> 8) & 0xff}.${hi & 0xff}.${(lo >> 8) & 0xff}.${lo & 0xff}`;
+      }
+    }
+  }
+
+  const fullFormMatch = normalized.match(/(?:0+:)+ffff:(.+)$/);
+  if (fullFormMatch?.[1]) {
+    const suffix = fullFormMatch[1];
+    if (parseIpv4Literal(suffix)) {
+      return suffix;
+    }
+  }
+
+  return null;
+}
+
+function isBlockedIpv4Literal(address: string): boolean {
+  if (address === METADATA_IPV4) {
+    return true;
+  }
+
+  const ipv4 = parseIpv4Literal(address);
+  return ipv4 ? isPrivateIpv4Part(ipv4[0]!, ipv4) : true;
+}
+
 function isPrivateIpv6Literal(address: string): boolean {
   const normalized = normalizeIpv6(address);
-  if (normalized === "::1") {
+
+  if (normalized === "::" || normalized === "::1") {
     return true;
   }
 
@@ -69,6 +117,11 @@ function isPrivateIpv6Literal(address: string): boolean {
     return true;
   }
 
+  const mappedIpv4 = parseIpv4MappedIpv6(normalized);
+  if (mappedIpv4) {
+    return isBlockedIpv4Literal(mappedIpv4);
+  }
+
   return false;
 }
 
@@ -78,14 +131,9 @@ export function isBlockedIpAddress(address: string): boolean {
     return true;
   }
 
-  if (normalized === METADATA_IPV4) {
-    return true;
-  }
-
   const ipVersion = isIP(normalized);
   if (ipVersion === 4) {
-    const ipv4 = parseIpv4Literal(normalized);
-    return ipv4 ? isPrivateIpv4Part(ipv4[0]!, ipv4) : true;
+    return isBlockedIpv4Literal(normalized);
   }
 
   if (ipVersion === 6) {
@@ -96,13 +144,8 @@ export function isBlockedIpAddress(address: string): boolean {
 }
 
 function isPrivateIpv6Hostname(hostname: string): boolean {
-  const normalized = hostname.toLowerCase();
-  return (
-    normalized === "::1" ||
-    normalized.startsWith("fc") ||
-    normalized.startsWith("fd") ||
-    normalized.startsWith("fe80")
-  );
+  const normalized = normalizeIpv6(hostname);
+  return isPrivateIpv6Literal(normalized);
 }
 
 export function validateFetchableUrl(input: string): FetchUrlValidationResult {

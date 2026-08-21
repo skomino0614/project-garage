@@ -93,6 +93,40 @@ describe("fetchProductPageHtml SSRF protections", () => {
     expect(fetchImpl).not.toHaveBeenCalled();
   });
 
+  it("rejects public URL redirecting to IPv4-mapped private IPv6", async () => {
+    const fetchImpl = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(null, {
+          status: 302,
+          headers: { Location: "http://[::ffff:127.0.0.1]/internal" },
+        }),
+      );
+
+    await expect(
+      fetchProductPageHtml("https://shop.example.com/products/1", {
+        fetchImpl,
+        lookup: safeLookup,
+      }),
+    ).rejects.toThrow(/Private IP addresses are not allowed/);
+
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+  });
+
+  it("rejects hostnames resolving to IPv4-mapped private addresses", async () => {
+    const lookup = vi.fn(async () => [{ address: "::ffff:10.0.0.1", family: 6 }]);
+    const fetchImpl = vi.fn();
+
+    await expect(
+      fetchProductPageHtml("https://shop.example.com/products/1", {
+        fetchImpl,
+        lookup,
+      }),
+    ).rejects.toThrow(/Resolved address ::ffff:10.0.0.1 is not allowed/);
+
+    expect(fetchImpl).not.toHaveBeenCalled();
+  });
+
   it("uses manual redirects instead of follow", async () => {
     const fetchImpl = vi.fn().mockResolvedValue(
       new Response("<html><title>ok</title></html>", {

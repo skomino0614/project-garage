@@ -48,6 +48,12 @@ function buildAiExtractPrompt(raw: RawWebExtract): string {
       jsonLdProducts: raw.jsonLdProducts,
       purchaseLinks: raw.purchaseLinks,
       visibleTextSample: raw.visibleTextSample,
+      tablePrices: raw.tablePrices,
+      productDescription: raw.productDescription,
+      productImageUrl: raw.productImageUrl,
+      specTags: raw.specTags,
+      brandFromTitle: raw.brandFromTitle,
+      productNameFromTitle: raw.productNameFromTitle,
     },
     null,
     2,
@@ -70,7 +76,10 @@ function appearsInRaw(raw: RawWebExtract, value: string | null | undefined): boo
     raw.ogTitle,
     raw.ogDescription,
     raw.visibleTextSample,
+    raw.productDescription,
     JSON.stringify(raw.jsonLdProducts),
+    JSON.stringify(raw.specTags),
+    JSON.stringify(raw.tablePrices),
   ];
 
   return haystacks.some((haystack) => normalize(haystack).includes(needle));
@@ -81,7 +90,10 @@ function priceAllowed(raw: RawWebExtract, min: number | null, max: number | null
     return true;
   }
 
-  const rawPrices = raw.jsonLdProducts.flatMap((product) => product.prices);
+  const rawPrices =
+    raw.tablePrices.length > 0
+      ? raw.tablePrices
+      : raw.jsonLdProducts.flatMap((product) => product.prices);
   if (rawPrices.length === 0) {
     return false;
   }
@@ -97,7 +109,14 @@ function sanitizeUrlAgainstRaw(raw: RawWebExtract, value: string | null | undefi
   }
 
   const allowed = new Set(
-    [raw.sourceUrl, raw.canonicalUrl, raw.ogImage, ...raw.purchaseLinks, ...raw.jsonLdProducts.flatMap((p) => [p.imageUrl, p.purchaseUrl])]
+    [
+      raw.sourceUrl,
+      raw.canonicalUrl,
+      raw.ogImage,
+      raw.productImageUrl,
+      ...raw.purchaseLinks,
+      ...raw.jsonLdProducts.flatMap((p) => [p.imageUrl, p.purchaseUrl]),
+    ]
       .map((url) => getSafeExternalUrl(url))
       .filter((url): url is string => Boolean(url)),
   );
@@ -113,7 +132,9 @@ export function mergeAiExtractWithRaw(raw: RawWebExtract, ai: AiProductExtract) 
     ...deterministic,
     name: appearsInRaw(raw, ai.name) ? ai.name : deterministic.name,
     brand:
-      appearsInRaw(raw, ai.brand) || raw.jsonLdProducts.some((product) => normalize(product.brand) === normalize(ai.brand))
+      appearsInRaw(raw, ai.brand) ||
+      normalize(raw.brandFromTitle) === normalize(ai.brand) ||
+      raw.jsonLdProducts.some((product) => normalize(product.brand) === normalize(ai.brand))
         ? ai.brand
         : deterministic.brand,
     description: appearsInRaw(raw, ai.description) ? ai.description : deterministic.description,
@@ -128,7 +149,7 @@ export function mergeAiExtractWithRaw(raw: RawWebExtract, ai: AiProductExtract) 
     resale: deterministic.resale,
     style: ai.style && appearsInRaw(raw, ai.style) ? ai.style : deterministic.style,
     tags:
-      ai.tags && ai.tags.every((tag) => appearsInRaw(raw, tag))
+      ai.tags && ai.tags.every((tag) => appearsInRaw(raw, tag) || raw.specTags.includes(tag))
         ? ai.tags
         : deterministic.tags,
     extractionSource: deterministic.extractionSource === "none" ? ("ai" as const) : ("mixed" as const),
