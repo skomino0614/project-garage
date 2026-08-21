@@ -3,8 +3,8 @@ import type { VehicleContext } from "@/lib/consult/types";
 import type { PriorityAttributeKey, PriorityLevel } from "./constants";
 import type { Product } from "./types";
 
-/** Vehicle fitment outcome for a product — never treat "unknown" as compatible. */
-export type VehicleCompatibilityStatus = "compatible" | "unknown" | "incompatible";
+/** Vehicle fitment outcome for a product — never treat "unknown" as confirmed/reference. */
+export type VehicleCompatibilityStatus = "confirmed" | "reference" | "unknown" | "incompatible";
 
 /** Match input aligned with ConsultationSummary / ConsultSlots (Phase 5). */
 export type ProductMatchInput = {
@@ -30,7 +30,8 @@ export type ProductMatchReason =
   | "リセールの条件と一致"
   | "スタイルと一致"
   | "タグと一致"
-  | "車種適合";
+  | "車種適合"
+  | "参考適合";
 
 export type ProductMatchResult = {
   product: Product;
@@ -45,3 +46,16 @@ export type RankProductMatchesOptions = {
   /** Number of top results to return (default 5, clamped 3–5). */
   limit?: number;
 };
+
+/** Score component maximums — total capped at 100. */
+export const MATCH_SCORE_MAX = 100 as const;
+export const VEHICLE_COMPATIBILITY_SCORE = {
+  confirmed: 35,
+  reference: 25,
+  unknown: 0,
+  incompatible: 0,
+} as const;
+export const BUDGET_SCORE_MAX = 25 as const;
+export const PRIORITY_SCORE_MAX = 30 as const;
+export const STYLE_SCORE_MAX = 5 as const;
+export const TAG_SCORE_MAX = 5 as const;

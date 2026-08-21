@@ -89,7 +89,8 @@ function verifyScenario(
 
   const minCompatible = options.minCompatibleMatches ?? options.expectedMatchCount;
   const compatibleCount = matches.filter(
-    (match) => match.vehicleCompatibility === "compatible",
+    (match) =>
+      match.vehicleCompatibility === "confirmed" || match.vehicleCompatibility === "reference",
   ).length;
   assert(
     compatibleCount >= minCompatible,

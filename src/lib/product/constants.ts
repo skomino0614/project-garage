@@ -35,3 +35,8 @@ export const PRIORITY_ATTRIBUTE_KEYS = [
 ] as const;
 
 export type PriorityAttributeKey = (typeof PRIORITY_ATTRIBUTE_KEYS)[number];
+
+/** Fitment evidence level stored on product_vehicle_compatibilities.fitment_type. */
+export const FITMENT_TYPES = ["confirmed", "reference"] as const;
+
+export type FitmentType = (typeof FITMENT_TYPES)[number];

@@ -13,6 +13,14 @@ import type {
   RankProductMatchesOptions,
   VehicleCompatibilityStatus,
 } from "./match-types";
+import {
+  BUDGET_SCORE_MAX,
+  MATCH_SCORE_MAX,
+  PRIORITY_SCORE_MAX,
+  STYLE_SCORE_MAX,
+  TAG_SCORE_MAX,
+  VEHICLE_COMPATIBILITY_SCORE,
+} from "./match-types";
 import type { Product, VehicleCompatibility } from "./types";
 
 /** Budget exclusion threshold — products above this ratio are filtered out. */
@@ -48,9 +56,6 @@ const PRIORITY_REASONS: Record<PriorityAttributeKey, ProductMatchReason> = {
   resale: "リセールの条件と一致",
 };
 
-const STYLE_BONUS = 5;
-const TAG_BONUS_PER_MATCH = 2;
-const TAG_BONUS_MAX = 5;
 const ALIGNMENT_THRESHOLD = 0.75;
 
 export function consultationSummaryToMatchInput(
@@ -103,11 +108,23 @@ export function getVehicleCompatibilityStatus(
     return "unknown";
   }
 
-  const hasMatch = product.compatibilities.some((compat) =>
+  const matching = product.compatibilities.filter((compat) =>
     compatibilityMatchesVehicle(compat, vehicle),
   );
 
-  return hasMatch ? "compatible" : "incompatible";
+  if (matching.length === 0) {
+    return "incompatible";
+  }
+
+  if (matching.some((compat) => compat.fitmentType === "confirmed")) {
+    return "confirmed";
+  }
+
+  if (matching.some((compat) => compat.fitmentType === "reference")) {
+    return "reference";
+  }
+
+  return "unknown";
 }
 
 function passesCategoryFilter(product: Product, category: string | null): boolean {
@@ -143,24 +160,48 @@ function attributeAlignmentScore(
   return Math.max(0, 1 - diff / 2);
 }
 
+function scoreVehicleCompatibility(status: VehicleCompatibilityStatus): {
+  score: number;
+  reasons: ProductMatchReason[];
+} {
+  const score = VEHICLE_COMPATIBILITY_SCORE[status];
+  const reasons: ProductMatchReason[] = [];
+
+  if (status === "confirmed") {
+    reasons.push("車種適合");
+  } else if (status === "reference") {
+    reasons.push("参考適合");
+  }
+
+  return { score, reasons };
+}
+
 function scoreBudget(
   product: Product,
   maxYen: number | null,
 ): { score: number; reasons: ProductMatchReason[]; withinBudget: boolean } {
   if (maxYen === null || maxYen <= 0) {
-    return { score: 25, reasons: [], withinBudget: true };
+    return { score: BUDGET_SCORE_MAX, reasons: [], withinBudget: true };
   }
 
   if (product.priceMaxYen <= maxYen) {
-    return { score: 25, reasons: ["予算内"], withinBudget: true };
+    return { score: BUDGET_SCORE_MAX, reasons: ["予算内"], withinBudget: true };
   }
 
   if (product.priceMinYen <= maxYen) {
-    return { score: 20, reasons: ["予算内（上限付近）"], withinBudget: true };
+    return {
+      score: Math.round(BUDGET_SCORE_MAX * 0.8),
+      reasons: ["予算内（上限付近）"],
+      withinBudget: true,
+    };
   }
 
   if (product.priceMinYen <= maxYen * BUDGET_SLIGHT_OVER_RATIO) {
-    return { score: 10, reasons: ["予算をやや超過"], withinBudget: false };
+    return {
+      score: Math.round(BUDGET_SCORE_MAX * 0.4),
+      reasons: ["予算をやや超過"],
+      withinBudget: false,
+    };
   }
 
   return { score: 0, reasons: [], withinBudget: false };
@@ -199,8 +240,7 @@ function scorePriorities(
     return { score: 0, reasons, matchCount: 0 };
   }
 
-  const maxPriorityPoints = 75;
-  const score = (earnedWeight / activeWeight) * maxPriorityPoints;
+  const score = (earnedWeight / activeWeight) * PRIORITY_SCORE_MAX;
 
   return { score, reasons, matchCount };
 }
@@ -214,7 +254,7 @@ function scoreStyle(
   }
 
   if (normalizeText(product.style) === normalizeText(stylePreference)) {
-    return { score: STYLE_BONUS, reasons: ["スタイルと一致"] };
+    return { score: STYLE_SCORE_MAX, reasons: ["スタイルと一致"] };
   }
 
   return { score: 0, reasons: [] };
@@ -253,8 +293,12 @@ function scoreTags(input: ProductMatchInput, product: Product): { score: number;
     return { score: 0, reasons: [] };
   }
 
-  const score = Math.min(matchCount * TAG_BONUS_PER_MATCH, TAG_BONUS_MAX);
+  const score = Math.min(matchCount * 2, TAG_SCORE_MAX);
   return { score, reasons: ["タグと一致"] };
+}
+
+function clampMatchScore(score: number): number {
+  return Math.min(MATCH_SCORE_MAX, Math.max(0, Math.round(score)));
 }
 
 export function scoreProductMatch(
@@ -278,20 +322,23 @@ export function scoreProductMatch(
     return null;
   }
 
+  const vehicle = scoreVehicleCompatibility(vehicleCompatibility);
   const budget = scoreBudget(product, input.budget.maxYen);
   const priorities = scorePriorities(input, product);
   const style = scoreStyle(input.stylePreference, product);
   const tags = scoreTags(input, product);
 
-  const reasons: ProductMatchReason[] = [...budget.reasons];
+  const reasons: ProductMatchReason[] = [
+    ...vehicle.reasons,
+    ...budget.reasons,
+    ...priorities.reasons,
+    ...style.reasons,
+    ...tags.reasons,
+  ];
 
-  if (vehicleCompatibility === "compatible") {
-    reasons.push("車種適合");
-  }
-
-  reasons.push(...priorities.reasons, ...style.reasons, ...tags.reasons);
-
-  const score = budget.score + priorities.score + style.score + tags.score;
+  const score = clampMatchScore(
+    vehicle.score + budget.score + priorities.score + style.score + tags.score,
+  );
 
   return {
     product,
@@ -313,7 +360,8 @@ export function compareProductMatchResults(
   }
 
   const vehicleRank = (status: VehicleCompatibilityStatus) => {
-    if (status === "compatible") return 2;
+    if (status === "confirmed") return 3;
+    if (status === "reference") return 2;
     if (status === "unknown") return 1;
     return 0;
   };

@@ -16,6 +16,8 @@ export const productVehicleCompatibilities = pgTable(
     maker: text("maker").notNull(),
     model: text("model").notNull(),
     series: text("series"),
+    /** confirmed = manufacturer evidence; reference = dealer/reference fitment. Null = unclassified. */
+    fitmentType: text("fitment_type"),
     note: text("note"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
