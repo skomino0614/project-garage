@@ -1,3 +1,5 @@
+import dns from "node:dns/promises";
+
 import {
   DEFAULT_FETCH_TIMEOUT_MS,
   DEFAULT_MAX_HTML_BYTES,
@@ -60,7 +62,7 @@ export async function fetchProductPageHtml(
   options?: FetchPageOptions,
 ): Promise<FetchHtmlResult> {
   const fetchImpl = options?.fetchImpl ?? fetch;
-  const lookup = options?.lookup ?? validateResolvedAddresses;
+  const lookup = options?.lookup ?? dns.lookup;
   const timeoutMs = options?.timeoutMs ?? DEFAULT_FETCH_TIMEOUT_MS;
   const maxBytes = options?.maxBytes ?? DEFAULT_MAX_HTML_BYTES;
   const maxRedirects = options?.maxRedirects ?? DEFAULT_MAX_REDIRECTS;

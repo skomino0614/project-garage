@@ -40,6 +40,7 @@ describe("html extract", () => {
     expect(candidate.purchaseUrl).toBe("https://shop.example.com/cart/demo-wheel-18");
     expect(candidate.category).toBeNull();
     expect(candidate.appearance).toBe("unknown");
+    expect(candidate.tags).toEqual([]);
     expect(candidate.warnings.some((warning) => warning.includes("カテゴリ"))).toBe(true);
   });
 });
