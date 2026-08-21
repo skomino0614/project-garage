@@ -9,6 +9,7 @@ import { getSafeExternalUrl } from "@/lib/product/external-url";
 
 import { buildCandidateFromRawExtract } from "./build-candidate";
 import { fetchAndExtractRawWebData } from "./fetch-page";
+import type { DnsLookupFn } from "./fetch-url-policy";
 import { tryEnhanceCandidateWithAi } from "./ai-extract-candidate";
 import type { ProductImportCandidate } from "./build-candidate";
 
@@ -16,10 +17,14 @@ export async function createProductImportCandidateFromUrl(
   inputUrl: string,
   options?: {
     fetchImpl?: typeof fetch;
+    lookup?: DnsLookupFn;
     useAi?: boolean;
   },
 ): Promise<ProductImportCandidate> {
-  const raw = await fetchAndExtractRawWebData(inputUrl, { fetchImpl: options?.fetchImpl });
+  const raw = await fetchAndExtractRawWebData(inputUrl, {
+    fetchImpl: options?.fetchImpl,
+    lookup: options?.lookup,
+  });
   const deterministic = buildCandidateFromRawExtract(raw);
 
   if (options?.useAi === false) {

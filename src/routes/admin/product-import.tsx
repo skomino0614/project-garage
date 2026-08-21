@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 
@@ -9,9 +9,19 @@ import {
   registerProductImportCandidate,
 } from "@/lib/product/import/product-import-candidate.functions";
 import type { ProductImportCandidate } from "@/lib/product/import/build-candidate";
+import { isProductImportAdminEmail } from "@/lib/product/import/product-import-auth";
 
 export const Route = createFileRoute("/admin/product-import")({
   head: () => ({ meta: [{ title: "商品登録候補 — Project Garage" }] }),
+  beforeLoad: ({ context }) => {
+    if (!context.user) {
+      throw redirect({ to: "/login" });
+    }
+
+    if (!isProductImportAdminEmail(context.user.email)) {
+      throw redirect({ to: "/" });
+    }
+  },
   component: AdminProductImportPage,
 });
 

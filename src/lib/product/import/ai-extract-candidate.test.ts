@@ -7,11 +7,14 @@ import { mergeAiExtractWithRaw, AiProductExtractSchema } from "./ai-extract-cand
 import { extractRawWebData } from "./html-extract";
 import { createProductImportCandidateFromUrl } from "./register-candidate";
 import { fetchProductPageHtml } from "./fetch-page";
+import type { DnsLookupFn } from "./fetch-url-policy";
 
 const sampleHtml = readFileSync(
   resolve(process.cwd(), "test-data/sample-product-page.html"),
   "utf8",
 );
+
+const safeLookup: DnsLookupFn = async () => [{ address: "93.184.216.34", family: 4 }];
 
 describe("AI extract validation", () => {
   it("validates structured output schema", () => {
@@ -65,6 +68,7 @@ describe("AI extract validation", () => {
     await expect(
       fetchProductPageHtml("https://shop.example.com/products/demo-wheel-18", {
         fetchImpl: vi.fn().mockRejectedValue(new Error("network down")),
+        lookup: safeLookup,
       }),
     ).rejects.toThrow("network down");
   });
@@ -79,7 +83,7 @@ describe("AI extract validation", () => {
 
     const candidate = await createProductImportCandidateFromUrl(
       "https://shop.example.com/products/demo-wheel-18",
-      { fetchImpl, useAi: false },
+      { fetchImpl, lookup: safeLookup, useAi: false },
     );
 
     expect(candidate.name).toBe("Demo Wheel 18インチ");
