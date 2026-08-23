@@ -4,6 +4,7 @@ import { z } from "zod";
 import type { ProductImportCandidate } from "./build-candidate";
 import {
   handleFetchProductImportCandidate,
+  handleRefreshRealProductImages,
   handleRegisterProductImportCandidate,
 } from "./product-import-candidate.handlers";
 import { RegisterProductCandidateSchema } from "./register-candidate";
@@ -20,3 +21,7 @@ export const fetchProductImportCandidate = createServerFn({ method: "POST" })
 export const registerProductImportCandidate = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => RegisterProductCandidateSchema.parse(data))
   .handler(async ({ data }) => handleRegisterProductImportCandidate(data));
+
+export const refreshRealProductImages = createServerFn({ method: "POST" })
+  .inputValidator((data: unknown) => z.object({}).parse(data))
+  .handler(async () => handleRefreshRealProductImages());

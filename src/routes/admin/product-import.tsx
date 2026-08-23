@@ -6,6 +6,7 @@ import { GarageNav } from "@/components/GarageNav";
 import { PRODUCT_CATEGORIES } from "@/lib/product/constants";
 import {
   fetchProductImportCandidate,
+  refreshRealProductImages,
   registerProductImportCandidate,
 } from "@/lib/product/import/product-import-candidate.functions";
 import type { ProductImportCandidate } from "@/lib/product/import/build-candidate";
@@ -27,15 +28,23 @@ export const Route = createFileRoute("/admin/product-import")({
 
 function AdminProductImportPage() {
   const fetchCandidateFn = useServerFn(fetchProductImportCandidate);
+  const refreshImagesFn = useServerFn(refreshRealProductImages);
   const registerCandidateFn = useServerFn(registerProductImportCandidate);
 
   const [url, setUrl] = useState("");
   const [category, setCategory] = useState<string>(PRODUCT_CATEGORIES[0] ?? "ホイール");
   const [candidate, setCandidate] = useState<ProductImportCandidate | null>(null);
   const [loading, setLoading] = useState(false);
+  const [refreshingImages, setRefreshingImages] = useState(false);
   const [registering, setRegistering] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [registeredProductId, setRegisteredProductId] = useState<string | null>(null);
+  const [imageRefreshResult, setImageRefreshResult] = useState<{
+    totalCount: number;
+    updatedCount: number;
+    skippedCount: number;
+    failedCount: number;
+  } | null>(null);
 
   const handleFetch = async () => {
     setLoading(true);
@@ -51,6 +60,22 @@ function AdminProductImportPage() {
       setErrorMsg(error instanceof Error ? error.message : "商品情報の取得に失敗しました。");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleRefreshImages = async () => {
+    setRefreshingImages(true);
+    setErrorMsg(null);
+    setImageRefreshResult(null);
+
+    try {
+      const result = await refreshImagesFn({ data: {} });
+      setImageRefreshResult(result);
+    } catch (error) {
+      console.error(error);
+      setErrorMsg(error instanceof Error ? error.message : "商品画像の更新に失敗しました。");
+    } finally {
+      setRefreshingImages(false);
     }
   };
 
@@ -107,22 +132,44 @@ function AdminProductImportPage() {
           WEBページURLから商品情報を抽出し、確認後に products へ登録します。
         </p>
 
-        <div className="mt-6 space-y-3 rounded-2xl border border-border/80 bg-card/50 p-4">
-          <label className="block text-sm font-medium">商品URL</label>
-          <input
-            value={url}
-            onChange={(event) => setUrl(event.target.value)}
-            placeholder="https://example.com/products/..."
-            className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm"
-          />
-          <button
-            type="button"
-            onClick={handleFetch}
-            disabled={loading || !url.trim()}
-            className="rounded-xl bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50"
-          >
-            {loading ? "取得中…" : "情報取得"}
-          </button>
+        <div className="mt-6 space-y-4 rounded-2xl border border-border/80 bg-card/50 p-4">
+          <div className="space-y-3">
+            <label className="block text-sm font-medium">商品URL</label>
+            <input
+              value={url}
+              onChange={(event) => setUrl(event.target.value)}
+              placeholder="https://example.com/products/..."
+              className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm"
+            />
+            <button
+              type="button"
+              onClick={handleFetch}
+              disabled={loading || !url.trim()}
+              className="rounded-xl bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50"
+            >
+              {loading ? "取得中…" : "情報取得"}
+            </button>
+          </div>
+
+          <div className="border-t border-border/70 pt-4">
+            <p className="text-sm font-medium">既存の実商品</p>
+            <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+              image_url が未設定の実商品だけを公式商品ページから再取得します。AIは使わず、商品ページの画像抽出だけを行います。
+            </p>
+            <button
+              type="button"
+              onClick={handleRefreshImages}
+              disabled={refreshingImages}
+              className="mt-3 rounded-xl border border-primary/40 px-4 py-2 text-sm font-medium text-primary disabled:opacity-50"
+            >
+              {refreshingImages ? "画像を再取得中…" : "実商品の画像を一括更新"}
+            </button>
+            {imageRefreshResult ? (
+              <p className="mt-3 text-xs text-muted-foreground">
+                対象 {imageRefreshResult.totalCount}件 / 更新 {imageRefreshResult.updatedCount}件 / 未取得 {imageRefreshResult.skippedCount}件 / エラー {imageRefreshResult.failedCount}件
+              </p>
+            ) : null}
+          </div>
         </div>
 
         {errorMsg ? <p className="mt-4 text-sm text-destructive">{errorMsg}</p> : null}
