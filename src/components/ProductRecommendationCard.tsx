@@ -16,9 +16,10 @@ import { ProductImage } from "./ProductImage";
 
 type ProductRecommendationCardProps = {
   item: ProductRecommendationDisplayItem;
+  rank?: number;
 };
 
-export function ProductRecommendationCard({ item }: ProductRecommendationCardProps) {
+export function ProductRecommendationCard({ item, rank }: ProductRecommendationCardProps) {
   const compatibilityLabel = formatCompatibilityLabel(
     item.vehicleCompatibility,
     item.compatibilities,
@@ -38,11 +39,18 @@ export function ProductRecommendationCard({ item }: ProductRecommendationCardPro
       href={detailHref}
       onClick={handleNavigate}
       aria-label={`${item.name} の商品詳細を見る`}
-      className="group flex min-w-0 select-none flex-col overflow-hidden rounded-2xl border border-border/80 bg-card/60 shadow-sm backdrop-blur transition-colors hover:border-primary/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+      className="group relative flex min-w-0 select-none flex-col overflow-hidden rounded-2xl border border-border/80 bg-card/60 shadow-sm backdrop-blur transition-colors hover:border-primary/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
     >
+      {rank && rank <= 3 ? (
+        <div className="absolute left-3 top-3 z-10 rounded-full border border-border/70 bg-background/90 px-2.5 py-1 text-[10px] font-semibold tracking-wide text-foreground shadow-sm backdrop-blur">
+          RECOMMEND #{rank}
+        </div>
+      ) : null}
+
       <ProductImage
         imageUrl={item.imageUrl}
         imageClassName="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+        className="aspect-[16/9] w-full overflow-hidden border-b border-border/60 bg-muted/20"
       />
 
       <div className="flex flex-1 flex-col gap-3 p-4">
