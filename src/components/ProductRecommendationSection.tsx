@@ -70,20 +70,29 @@ export function ProductRecommendationSection({
       style={scrollMarginBottom ? { scrollMarginBottom } : undefined}
     >
       <div>
-        <h2
-          id="product-recommendations-title"
-          className="text-sm font-semibold text-foreground sm:text-base"
-        >
-          あなたにおすすめ
-        </h2>
+        <div className="flex items-center gap-2">
+          <h2
+            id="product-recommendations-title"
+            className="text-sm font-semibold text-foreground sm:text-base"
+          >
+            あなたにおすすめ
+          </h2>
+          <span className="rounded-full border border-primary/20 bg-primary/5 px-2 py-0.5 text-[10px] font-medium text-primary">
+            BEST 3
+          </span>
+        </div>
         <p className="mt-1 text-xs text-muted-foreground">
-          いまの相談条件に基づく候補です
+          車種・予算・相談内容をもとに、相性のよい候補を3つ選びました
         </p>
       </div>
 
       <div className={RECOMMENDATION_GRID_CLASS}>
-        {items.map((item) => (
-          <ProductRecommendationCard key={item.productId} item={item} />
+        {items.map((item, index) => (
+          <ProductRecommendationCard
+            key={item.productId}
+            item={item}
+            rank={index + 1}
+          />
         ))}
       </div>
     </section>
