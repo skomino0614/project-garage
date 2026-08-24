@@ -127,10 +127,20 @@ function AdminProductImportPage() {
     <div className="min-h-screen bg-background">
       <GarageNav />
       <main className="mx-auto max-w-3xl px-5 py-10">
-        <h1 className="text-2xl font-semibold tracking-tight">商品登録候補（開発用）</h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          WEBページURLから商品情報を抽出し、確認後に products へ登録します。
-        </p>
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-semibold tracking-tight">商品登録候補（開発用）</h1>
+            <p className="mt-2 text-sm text-muted-foreground">
+              WEBページURLから商品情報を抽出し、確認後に products へ登録します。
+            </p>
+          </div>
+          <Link
+            to="/admin/product-compatibility"
+            className="rounded-xl border border-primary/40 px-4 py-2 text-sm font-medium text-primary hover:bg-primary/5"
+          >
+            登録済み商品一覧 →
+          </Link>
+        </div>
 
         <div className="mt-6 space-y-4 rounded-2xl border border-border/80 bg-card/50 p-4">
           <div className="space-y-3">
@@ -177,13 +187,21 @@ function AdminProductImportPage() {
           <div className="mt-4 rounded-xl border border-primary/30 bg-primary/5 p-4">
             <p className="text-sm text-primary">商品登録が完了しました。</p>
             <p className="mt-1 break-all text-xs text-muted-foreground">Product ID: {registeredProductId}</p>
-            <Link
-              to="/admin/product-compatibility/$productId"
-              params={{ productId: registeredProductId }}
-              className="mt-3 inline-block rounded-xl bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
-            >
-              適合車種を登録する →
-            </Link>
+            <div className="mt-3 flex flex-wrap gap-3">
+              <Link
+                to="/admin/product-compatibility/$productId"
+                params={{ productId: registeredProductId }}
+                className="rounded-xl bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
+              >
+                適合車種を登録する →
+              </Link>
+              <Link
+                to="/admin/product-compatibility"
+                className="rounded-xl border border-primary/40 px-4 py-2 text-sm font-medium text-primary"
+              >
+                登録済み商品一覧 →
+              </Link>
+            </div>
           </div>
         ) : null}
 
