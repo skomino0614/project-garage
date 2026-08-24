@@ -32,7 +32,7 @@ function AdminProductsPage() {
   useEffect(() => {
     let active = true;
 
-    void getProductsFn({ data: undefined })
+    void getProductsFn({ data: {} })
       .then((result) => {
         if (!active) return;
         setProducts(result);
