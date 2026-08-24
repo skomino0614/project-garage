@@ -105,15 +105,19 @@ function AdminProductCompatibilityPage() {
     <div className="min-h-screen bg-background">
       <GarageNav />
       <main className="mx-auto max-w-3xl px-5 py-10">
-        <div className="mb-6">
-          <Link to="/admin/product-import" className="text-sm text-primary hover:underline">
-            ← 商品登録へ戻る
+        <div className="mb-6 flex flex-wrap items-center gap-2 text-sm">
+          <Link to="/admin/products" className="text-primary hover:underline">
+            ← 登録済み商品一覧
           </Link>
-          <h1 className="mt-3 text-2xl font-semibold tracking-tight">適合車種を登録</h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            商品ごとに車種適合情報を登録します。根拠がメーカー公式なら「確定適合」、販売店等の参考適合なら「参考適合」を選択してください。
-          </p>
+          <span className="text-muted-foreground">/</span>
+          <Link to="/admin/product-import" className="text-primary hover:underline">
+            商品登録
+          </Link>
         </div>
+        <h1 className="text-2xl font-semibold tracking-tight">適合車種を登録</h1>
+        <p className="mt-2 text-sm text-muted-foreground">
+          商品ごとに車種適合情報を登録します。根拠がメーカー公式なら「確定適合」、販売店等の参考適合なら「参考適合」を選択してください。
+        </p>
 
         {loading ? <p className="text-sm text-muted-foreground">読み込み中…</p> : null}
         {errorMsg ? <p className="mb-4 text-sm text-destructive">{errorMsg}</p> : null}
