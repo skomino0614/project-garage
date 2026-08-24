@@ -5,6 +5,8 @@ import { useState } from "react";
 import { GarageNav } from "@/components/GarageNav";
 import { PRODUCT_CATEGORIES } from "@/lib/product/constants";
 import {
+  bulkImportCompatibilities,
+  bulkImportProducts,
   fetchProductImportCandidate,
   refreshRealProductImages,
   registerProductImportCandidate,
@@ -25,6 +27,8 @@ function AdminProductImportPage() {
   const fetchCandidateFn = useServerFn(fetchProductImportCandidate);
   const refreshImagesFn = useServerFn(refreshRealProductImages);
   const registerCandidateFn = useServerFn(registerProductImportCandidate);
+  const bulkProductsFn = useServerFn(bulkImportProducts);
+  const bulkCompatibilitiesFn = useServerFn(bulkImportCompatibilities);
 
   const [url, setUrl] = useState("");
   const [category, setCategory] = useState<string>(PRODUCT_CATEGORIES[0] ?? "ホイール");
@@ -40,6 +44,68 @@ function AdminProductImportPage() {
     skippedCount: number;
     failedCount: number;
   } | null>(null);
+  const [productCsvName, setProductCsvName] = useState<string | null>(null);
+  const [compatCsvName, setCompatCsvName] = useState<string | null>(null);
+  const [bulkImporting, setBulkImporting] = useState<"products" | "compatibilities" | null>(null);
+  const [bulkResult, setBulkResult] = useState<string | null>(null);
+
+  const readCsvFile = async (file: File | undefined) => {
+    if (!file) return null;
+    if (!file.name.toLowerCase().endsWith(".csv")) {
+      throw new Error("CSVファイルを選択してください。");
+    }
+    if (file.size > 1024 * 1024) {
+      throw new Error("CSVは1MB以内にしてください。");
+    }
+    return file.text();
+  };
+
+  const handleBulkProducts = async (file: File | undefined) => {
+    setBulkImporting("products");
+    setErrorMsg(null);
+    setBulkResult(null);
+    try {
+      const csvText = await readCsvFile(file);
+      if (!csvText) return;
+      const result = await bulkProductsFn({ data: { csvText } });
+      setBulkResult(`商品一括登録完了：新規 ${result.insertedCount}件 / 更新 ${result.updatedCount}件`);
+    } catch (error) {
+      console.error(error);
+      setErrorMsg(error instanceof Error ? error.message : "商品CSVの登録に失敗しました。");
+    } finally {
+      setBulkImporting(null);
+    }
+  };
+
+  const handleBulkCompatibilities = async (file: File | undefined) => {
+    setBulkImporting("compatibilities");
+    setErrorMsg(null);
+    setBulkResult(null);
+    try {
+      const csvText = await readCsvFile(file);
+      if (!csvText) return;
+      const result = await bulkCompatibilitiesFn({ data: { csvText } });
+      setBulkResult(`適合情報一括登録完了：${result.insertedCount}件`);
+    } catch (error) {
+      console.error(error);
+      setErrorMsg(error instanceof Error ? error.message : "適合CSVの登録に失敗しました。");
+    } finally {
+      setBulkImporting(null);
+    }
+  };
+
+  const downloadTemplate = (kind: "products" | "compatibilities") => {
+    const headers = kind === "products"
+      ? "category,name,brand,price_min_yen,price_max_yen,description,image_url,product_url,purchase_url,appearance,comfort,practicality,resale,style,tags"
+      : "product_id,maker,model,series,note,fitment_type";
+    const blob = new Blob([`${headers}\n`], { type: "text/csv;charset=utf-8" });
+    const href = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = href;
+    anchor.download = kind === "products" ? "project-garage-products-template.csv" : "project-garage-compatibilities-template.csv";
+    anchor.click();
+    URL.revokeObjectURL(href);
+  };
 
   const handleFetch = async () => {
     setLoading(true);
@@ -130,6 +196,84 @@ function AdminProductImportPage() {
           </Link>
         </div>
 
+        <section className="mt-6 rounded-2xl border border-primary/30 bg-primary/5 p-5">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h2 className="text-lg font-semibold">CSV一括登録</h2>
+              <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                商品と適合情報をまとめて登録できます。各CSVは1MBまで。商品URLがある商品は再登録時に更新されます。
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-4 grid gap-4 md:grid-cols-2">
+            <div className="rounded-xl border border-border bg-background/60 p-4">
+              <p className="text-sm font-medium">① 商品CSV</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                新規登録＋product_url一致時の更新。既存商品の is_demo / is_active は変更しません。
+              </p>
+              <button
+                type="button"
+                onClick={() => downloadTemplate("products")}
+                className="mt-3 rounded-lg border border-border px-3 py-2 text-xs"
+              >
+                テンプレートをダウンロード
+              </button>
+              <label className="mt-3 block cursor-pointer rounded-lg bg-primary px-3 py-2 text-center text-xs font-medium text-primary-foreground">
+                {bulkImporting === "products" ? "登録中…" : "商品CSVを選択して登録"}
+                <input
+                  type="file"
+                  accept=".csv,text/csv"
+                  className="hidden"
+                  disabled={bulkImporting !== null}
+                  onChange={(event) => {
+                    const file = event.target.files?.[0];
+                    setProductCsvName(file?.name ?? null);
+                    void handleBulkProducts(file);
+                    event.currentTarget.value = "";
+                  }}
+                />
+              </label>
+              {productCsvName ? <p className="mt-2 truncate text-xs text-muted-foreground">選択：{productCsvName}</p> : null}
+            </div>
+
+            <div className="rounded-xl border border-border bg-background/60 p-4">
+              <p className="text-sm font-medium">② 適合情報CSV</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                product_idで商品と紐付けます。fitment_type は confirmed / reference / 空欄に対応。
+              </p>
+              <button
+                type="button"
+                onClick={() => downloadTemplate("compatibilities")}
+                className="mt-3 rounded-lg border border-border px-3 py-2 text-xs"
+              >
+                テンプレートをダウンロード
+              </button>
+              <label className="mt-3 block cursor-pointer rounded-lg bg-primary px-3 py-2 text-center text-xs font-medium text-primary-foreground">
+                {bulkImporting === "compatibilities" ? "登録中…" : "適合CSVを選択して登録"}
+                <input
+                  type="file"
+                  accept=".csv,text/csv"
+                  className="hidden"
+                  disabled={bulkImporting !== null}
+                  onChange={(event) => {
+                    const file = event.target.files?.[0];
+                    setCompatCsvName(file?.name ?? null);
+                    void handleBulkCompatibilities(file);
+                    event.currentTarget.value = "";
+                  }}
+                />
+              </label>
+              {compatCsvName ? <p className="mt-2 truncate text-xs text-muted-foreground">選択：{compatCsvName}</p> : null}
+            </div>
+          </div>
+
+          {bulkResult ? <p className="mt-4 text-sm text-primary">{bulkResult}</p> : null}
+          <p className="mt-3 text-xs text-amber-700 dark:text-amber-300">
+            注意：適合情報CSVは現在「追加登録」です。同じCSVを繰り返し登録すると重複するため、同一データの再投入は避けてください。
+          </p>
+        </section>
+
         <div className="mt-6 space-y-4 rounded-2xl border border-border/80 bg-card/50 p-4">
           <div className="space-y-3">
             <label className="block text-sm font-medium">商品URL</label>
@@ -170,7 +314,7 @@ function AdminProductImportPage() {
           </div>
         </div>
 
-        {errorMsg ? <p className="mt-4 text-sm text-destructive">{errorMsg}</p> : null}
+        {errorMsg ? <p className="mt-4 whitespace-pre-line text-sm text-destructive">{errorMsg}</p> : null}
         {registeredProductId ? (
           <div className="mt-4 rounded-xl border border-primary/30 bg-primary/5 p-4">
             <p className="text-sm text-primary">商品登録が完了しました。</p>
