@@ -1,4 +1,4 @@
-import { and, eq } from "drizzle-orm";
+import { and, desc, eq, sql } from "drizzle-orm";
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
@@ -39,6 +39,15 @@ export type AdminProductSummary = {
   category: string;
 };
 
+export type AdminProductCompatibilityListItem = {
+  id: string;
+  name: string;
+  brand: string;
+  category: string;
+  productUrl: string | null;
+  compatibilityCount: number;
+};
+
 async function assertProductExists(productId: string) {
   const db = getDb();
   const rows = await db
@@ -54,6 +63,32 @@ async function assertProductExists(productId: string) {
 
   return product;
 }
+
+export const getAdminProductCompatibilityList = createServerFn({ method: "POST" })
+  .handler(async () => {
+    await assertProductImportAdmin();
+    const db = getDb();
+
+    const rows = await db
+      .select({
+        id: products.id,
+        name: products.name,
+        brand: products.brand,
+        category: products.category,
+        productUrl: products.productUrl,
+        compatibilityCount: sql<number>`count(${productVehicleCompatibilities.id})::int`,
+      })
+      .from(products)
+      .leftJoin(
+        productVehicleCompatibilities,
+        eq(productVehicleCompatibilities.productId, products.id),
+      )
+      .where(and(eq(products.isActive, true), eq(products.isDemo, false)))
+      .groupBy(products.id)
+      .orderBy(desc(products.createdAt));
+
+    return rows;
+  });
 
 export const getAdminProductCompatibility = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => ProductCompatibilityListInputSchema.parse(data))
