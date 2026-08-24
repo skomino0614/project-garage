@@ -7,7 +7,6 @@ import {
   getAdminProductCompatibility,
   saveAdminProductCompatibility,
 } from "@/lib/product/admin-product-compatibility.functions";
-import { isProductImportAdminEmail } from "@/lib/product/import/product-import-auth";
 
 type Compatibility = {
   id: string;
@@ -23,10 +22,6 @@ export const Route = createFileRoute("/admin/product-compatibility/$productId")(
   beforeLoad: ({ context }) => {
     if (!context.user) {
       throw redirect({ to: "/login" });
-    }
-
-    if (!isProductImportAdminEmail(context.user.email)) {
-      throw redirect({ to: "/" });
     }
   },
   component: AdminProductCompatibilityPage,
