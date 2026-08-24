@@ -17,7 +17,7 @@ function AdminProductsPage() {
       <GarageNav />
       <main className="mx-auto max-w-3xl px-5 py-10">
         <h1 className="text-2xl font-semibold">登録済み商品</h1>
-        <p className="mt-2 text-sm text-muted-foreground">商品一覧ルートは復旧しました。</p>
+        <p className="mt-2 text-sm text-muted-foreground">登録済み商品一覧を表示するページです。</p>
         <Link to="/admin/product-import" className="mt-6 inline-block text-sm text-primary hover:underline">← 商品登録へ</Link>
       </main>
     </div>
