@@ -1,6 +1,10 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getRequestUrl } from "@tanstack/react-start/server";
 
+import {
+  buildAuthCallbackUrl,
+  resolveAuthRedirectOrigin,
+} from "./auth-redirect";
 import { createClient } from "./supabase/server";
 
 export type AuthUser = {
@@ -31,25 +35,56 @@ export const fetchClaims = createServerFn({ method: "GET" }).handler(
   },
 );
 
-export const signInWithGoogle = createServerFn({ method: "POST" }).handler(
-  async (): Promise<{ url: string } | { error: string }> => {
-    const supabase = createClient();
-    const origin = getRequestUrl().origin;
+type SignInWithGoogleInput = {
+  redirectOrigin?: string;
+};
 
-    const { data, error } = await supabase.auth.signInWithOAuth({
+export const signInWithGoogle = createServerFn({ method: "POST" })
+  .validator((data: unknown): SignInWithGoogleInput => {
+    if (data === undefined || data === null) {
+      return {};
+    }
+
+    if (typeof data !== "object") {
+      throw new Error("Invalid request body");
+    }
+
+    const redirectOrigin = (data as { redirectOrigin?: unknown }).redirectOrigin;
+    if (redirectOrigin === undefined) {
+      return {};
+    }
+
+    if (typeof redirectOrigin !== "string" || !redirectOrigin.trim()) {
+      throw new Error("Invalid redirectOrigin");
+    }
+
+    return { redirectOrigin: redirectOrigin.trim() };
+  })
+  .handler(async ({ data }): Promise<{ url: string } | { error: string }> => {
+    const supabase = createClient();
+    const serverOrigin = getRequestUrl({
+      xForwardedHost: true,
+      xForwardedProto: true,
+    }).origin;
+    const origin = resolveAuthRedirectOrigin(data.redirectOrigin, serverOrigin);
+
+    if (!origin) {
+      return { error: "Invalid redirect origin" };
+    }
+
+    const { data: oauthData, error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${origin}/auth/callback`,
+        redirectTo: buildAuthCallbackUrl(origin),
       },
     });
 
-    if (error || !data.url) {
+    if (error || !oauthData.url) {
       return { error: error?.message ?? "Failed to start Google OAuth" };
     }
 
-    return { url: data.url };
-  },
-);
+    return { url: oauthData.url };
+  });
 
 export const signOut = createServerFn({ method: "POST" }).handler(
   async (): Promise<{ success: true }> => {

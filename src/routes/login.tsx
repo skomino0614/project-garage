@@ -36,7 +36,9 @@ function LoginPage() {
     setIsLoading(true);
 
     try {
-      const result = await startGoogleSignIn();
+      const result = await startGoogleSignIn({
+        data: { redirectOrigin: window.location.origin },
+      });
 
       if ("error" in result) {
         setErrorMsg(result.error);
