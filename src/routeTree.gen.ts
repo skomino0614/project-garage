@@ -18,6 +18,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as ProductsProductIdRouteImport } from './routes/products/$productId'
 import { Route as AuthCallbackRouteImport } from './routes/auth/callback'
 import { Route as AdminProductImportRouteImport } from './routes/admin/product-import'
+import { Route as AdminProductCompatibilityIndexRouteImport } from './routes/admin/product-compatibility/index'
 import { Route as AdminProductCompatibilityProductIdRouteImport } from './routes/admin/product-compatibility/$productId'
 
 const SelectRoute = SelectRouteImport.update({
@@ -65,6 +66,11 @@ const AdminProductImportRoute = AdminProductImportRouteImport.update({
   path: '/admin/product-import',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminProductCompatibilityIndexRoute = AdminProductCompatibilityIndexRouteImport.update({
+  id: '/admin/product-compatibility/',
+  path: '/admin/product-compatibility/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminProductCompatibilityProductIdRoute = AdminProductCompatibilityProductIdRouteImport.update({
   id: '/admin/product-compatibility/$productId',
   path: '/admin/product-compatibility/$productId',
@@ -79,6 +85,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/select': typeof SelectRoute
   '/admin/product-import': typeof AdminProductImportRoute
+  '/admin/product-compatibility/': typeof AdminProductCompatibilityIndexRoute
   '/admin/product-compatibility/$productId': typeof AdminProductCompatibilityProductIdRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/products/$productId': typeof ProductsProductIdRoute
@@ -91,6 +98,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/select': typeof SelectRoute
   '/admin/product-import': typeof AdminProductImportRoute
+  '/admin/product-compatibility/': typeof AdminProductCompatibilityIndexRoute
   '/admin/product-compatibility/$productId': typeof AdminProductCompatibilityProductIdRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/products/$productId': typeof ProductsProductIdRoute
@@ -104,6 +112,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/select': typeof SelectRoute
   '/admin/product-import': typeof AdminProductImportRoute
+  '/admin/product-compatibility/': typeof AdminProductCompatibilityIndexRoute
   '/admin/product-compatibility/$productId': typeof AdminProductCompatibilityProductIdRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/products/$productId': typeof ProductsProductIdRoute
@@ -118,6 +127,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/select'
     | '/admin/product-import'
+    | '/admin/product-compatibility/'
     | '/admin/product-compatibility/$productId'
     | '/auth/callback'
     | '/products/$productId'
@@ -130,6 +140,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/select'
     | '/admin/product-import'
+    | '/admin/product-compatibility/'
     | '/admin/product-compatibility/$productId'
     | '/auth/callback'
     | '/products/$productId'
@@ -142,6 +153,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/select'
     | '/admin/product-import'
+    | '/admin/product-compatibility/'
     | '/admin/product-compatibility/$productId'
     | '/auth/callback'
     | '/products/$productId'
@@ -155,6 +167,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   SelectRoute: typeof SelectRoute
   AdminProductImportRoute: typeof AdminProductImportRoute
+  AdminProductCompatibilityIndexRoute: typeof AdminProductCompatibilityIndexRoute
   AdminProductCompatibilityProductIdRoute: typeof AdminProductCompatibilityProductIdRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
   ProductsProductIdRoute: typeof ProductsProductIdRoute
@@ -225,6 +238,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminProductImportRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/product-compatibility/': {
+      id: '/admin/product-compatibility/'
+      path: '/admin/product-compatibility/'
+      fullPath: '/admin/product-compatibility/'
+      preLoaderRoute: typeof AdminProductCompatibilityIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/product-compatibility/$productId': {
       id: '/admin/product-compatibility/$productId'
       path: '/admin/product-compatibility/$productId'
@@ -243,6 +263,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   SelectRoute: SelectRoute,
   AdminProductImportRoute: AdminProductImportRoute,
+  AdminProductCompatibilityIndexRoute: AdminProductCompatibilityIndexRoute,
   AdminProductCompatibilityProductIdRoute: AdminProductCompatibilityProductIdRoute,
   AuthCallbackRoute: AuthCallbackRoute,
   ProductsProductIdRoute: ProductsProductIdRoute,
