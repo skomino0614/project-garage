@@ -106,9 +106,14 @@ function AdminProductCompatibilityPage() {
       <GarageNav />
       <main className="mx-auto max-w-3xl px-5 py-10">
         <div className="mb-6">
-          <Link to="/admin/product-import" className="text-sm text-primary hover:underline">
-            ← 商品登録へ戻る
-          </Link>
+          <div className="flex flex-wrap items-center gap-4 text-sm">
+            <a href="/admin/product-import" className="text-primary hover:underline">
+              ← 商品登録へ戻る
+            </a>
+            <Link to="/admin/product-compatibility" className="text-primary hover:underline">
+              登録済み商品一覧 →
+            </Link>
+          </div>
           <h1 className="mt-3 text-2xl font-semibold tracking-tight">適合車種を登録</h1>
           <p className="mt-2 text-sm text-muted-foreground">
             商品ごとに車種適合情報を登録します。根拠がメーカー公式なら「確定適合」、販売店等の参考適合なら「参考適合」を選択してください。
