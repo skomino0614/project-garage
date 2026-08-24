@@ -1,4 +1,4 @@
-import { createFileRoute, redirect } from "@tanstack/react-router";
+import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 
@@ -174,7 +174,17 @@ function AdminProductImportPage() {
 
         {errorMsg ? <p className="mt-4 text-sm text-destructive">{errorMsg}</p> : null}
         {registeredProductId ? (
-          <p className="mt-4 text-sm text-primary">登録完了: {registeredProductId}</p>
+          <div className="mt-4 rounded-xl border border-primary/30 bg-primary/5 p-4">
+            <p className="text-sm text-primary">商品登録が完了しました。</p>
+            <p className="mt-1 break-all text-xs text-muted-foreground">Product ID: {registeredProductId}</p>
+            <Link
+              to="/admin/product-compatibility/$productId"
+              params={{ productId: registeredProductId }}
+              className="mt-3 inline-block rounded-xl bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
+            >
+              適合車種を登録する →
+            </Link>
+          </div>
         ) : null}
 
         {candidate ? (
