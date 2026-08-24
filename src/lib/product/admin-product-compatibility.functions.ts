@@ -1,4 +1,4 @@
-import { and, eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
@@ -37,6 +37,13 @@ export type AdminProductSummary = {
   name: string;
   brand: string;
   category: string;
+  priceMinYen: number;
+  priceMaxYen: number;
+  imageUrl: string | null;
+  productUrl: string | null;
+  isActive: boolean;
+  isDemo: boolean;
+  createdAt: string;
 };
 
 async function assertProductExists(productId: string) {
@@ -54,6 +61,34 @@ async function assertProductExists(productId: string) {
 
   return product;
 }
+
+export const getAdminProducts = createServerFn({ method: "POST" })
+  .handler(async () => {
+    await assertProductImportAdmin();
+    const db = getDb();
+
+    const rows = await db
+      .select({
+        id: products.id,
+        name: products.name,
+        brand: products.brand,
+        category: products.category,
+        priceMinYen: products.priceMinYen,
+        priceMaxYen: products.priceMaxYen,
+        imageUrl: products.imageUrl,
+        productUrl: products.productUrl,
+        isActive: products.isActive,
+        isDemo: products.isDemo,
+        createdAt: products.createdAt,
+      })
+      .from(products)
+      .orderBy(desc(products.createdAt));
+
+    return rows.map((product) => ({
+      ...product,
+      createdAt: product.createdAt.toISOString(),
+    } satisfies AdminProductSummary));
+  });
 
 export const getAdminProductCompatibility = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => ProductCompatibilityListInputSchema.parse(data))
