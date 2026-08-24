@@ -48,6 +48,7 @@ function AdminProductImportPage() {
   const [compatCsvName, setCompatCsvName] = useState<string | null>(null);
   const [bulkImporting, setBulkImporting] = useState<"products" | "compatibilities" | null>(null);
   const [bulkResult, setBulkResult] = useState<string | null>(null);
+  const [bulkProductIds, setBulkProductIds] = useState<string[]>([]);
 
   const readCsvFile = async (file: File | undefined) => {
     if (!file) return null;
@@ -64,10 +65,12 @@ function AdminProductImportPage() {
     setBulkImporting("products");
     setErrorMsg(null);
     setBulkResult(null);
+    setBulkProductIds([]);
     try {
       const csvText = await readCsvFile(file);
       if (!csvText) return;
       const result = await bulkProductsFn({ data: { csvText } });
+      setBulkProductIds(result.productIds);
       setBulkResult(`商品一括登録完了：新規 ${result.insertedCount}件 / 更新 ${result.updatedCount}件`);
     } catch (error) {
       console.error(error);
@@ -269,6 +272,12 @@ function AdminProductImportPage() {
           </div>
 
           {bulkResult ? <p className="mt-4 text-sm text-primary">{bulkResult}</p> : null}
+          {bulkProductIds.length > 0 ? (
+            <details className="mt-3 rounded-xl border border-border bg-background/50 p-3">
+              <summary className="cursor-pointer text-xs font-medium">今回処理した商品ID（適合CSV作成用）</summary>
+              <pre className="mt-2 max-h-48 overflow-auto whitespace-pre-wrap break-all text-[11px] text-muted-foreground">{bulkProductIds.join("\n")}</pre>
+            </details>
+          ) : null}
           <p className="mt-3 text-xs text-amber-700 dark:text-amber-300">
             注意：適合情報CSVは現在「追加登録」です。同じCSVを繰り返し登録すると重複するため、同一データの再投入は避けてください。
           </p>
