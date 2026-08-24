@@ -177,12 +177,13 @@ function AdminProductImportPage() {
           <div className="mt-4 rounded-xl border border-primary/30 bg-primary/5 p-4">
             <p className="text-sm text-primary">商品登録が完了しました。</p>
             <p className="mt-1 break-all text-xs text-muted-foreground">Product ID: {registeredProductId}</p>
-            <a
-              href={`/admin/product-compatibility/${registeredProductId}`}
+            <Link
+              to="/admin/product-compatibility/$productId"
+              params={{ productId: registeredProductId }}
               className="mt-3 inline-block rounded-xl bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
             >
               適合車種を登録する →
-            </a>
+            </Link>
           </div>
         ) : null}
 
