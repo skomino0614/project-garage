@@ -22,6 +22,8 @@ const ProductCompatibilityListInputSchema = z.object({
   productId: z.string().uuid(),
 });
 
+const AdminProductsListInputSchema = z.object({});
+
 export type AdminProductCompatibility = {
   id: string;
   productId: string;
@@ -63,6 +65,7 @@ async function assertProductExists(productId: string) {
 }
 
 export const getAdminProducts = createServerFn({ method: "POST" })
+  .inputValidator((data: unknown) => AdminProductsListInputSchema.parse(data))
   .handler(async () => {
     await assertProductImportAdmin();
     const db = getDb();
