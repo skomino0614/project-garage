@@ -18,6 +18,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as ProductsProductIdRouteImport } from './routes/products/$productId'
 import { Route as AuthCallbackRouteImport } from './routes/auth/callback'
 import { Route as AdminProductImportRouteImport } from './routes/admin/product-import'
+import { Route as AdminProductCompatibilityProductIdRouteImport } from './routes/admin/product-compatibility/$productId'
 
 const SelectRoute = SelectRouteImport.update({
   id: '/select',
@@ -64,6 +65,11 @@ const AdminProductImportRoute = AdminProductImportRouteImport.update({
   path: '/admin/product-import',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminProductCompatibilityProductIdRoute = AdminProductCompatibilityProductIdRouteImport.update({
+  id: '/admin/product-compatibility/$productId',
+  path: '/admin/product-compatibility/$productId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -73,6 +79,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/select': typeof SelectRoute
   '/admin/product-import': typeof AdminProductImportRoute
+  '/admin/product-compatibility/$productId': typeof AdminProductCompatibilityProductIdRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/products/$productId': typeof ProductsProductIdRoute
 }
@@ -84,6 +91,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/select': typeof SelectRoute
   '/admin/product-import': typeof AdminProductImportRoute
+  '/admin/product-compatibility/$productId': typeof AdminProductCompatibilityProductIdRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/products/$productId': typeof ProductsProductIdRoute
 }
@@ -96,6 +104,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/select': typeof SelectRoute
   '/admin/product-import': typeof AdminProductImportRoute
+  '/admin/product-compatibility/$productId': typeof AdminProductCompatibilityProductIdRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/products/$productId': typeof ProductsProductIdRoute
 }
@@ -109,6 +118,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/select'
     | '/admin/product-import'
+    | '/admin/product-compatibility/$productId'
     | '/auth/callback'
     | '/products/$productId'
   fileRoutesByTo: FileRoutesByTo
@@ -120,6 +130,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/select'
     | '/admin/product-import'
+    | '/admin/product-compatibility/$productId'
     | '/auth/callback'
     | '/products/$productId'
   id:
@@ -131,6 +142,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/select'
     | '/admin/product-import'
+    | '/admin/product-compatibility/$productId'
     | '/auth/callback'
     | '/products/$productId'
   fileRoutesById: FileRoutesById
@@ -143,6 +155,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   SelectRoute: typeof SelectRoute
   AdminProductImportRoute: typeof AdminProductImportRoute
+  AdminProductCompatibilityProductIdRoute: typeof AdminProductCompatibilityProductIdRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
   ProductsProductIdRoute: typeof ProductsProductIdRoute
 }
@@ -212,6 +225,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminProductImportRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/product-compatibility/$productId': {
+      id: '/admin/product-compatibility/$productId'
+      path: '/admin/product-compatibility/$productId'
+      fullPath: '/admin/product-compatibility/$productId'
+      preLoaderRoute: typeof AdminProductCompatibilityProductIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -223,6 +243,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   SelectRoute: SelectRoute,
   AdminProductImportRoute: AdminProductImportRoute,
+  AdminProductCompatibilityProductIdRoute: AdminProductCompatibilityProductIdRoute,
   AuthCallbackRoute: AuthCallbackRoute,
   ProductsProductIdRoute: ProductsProductIdRoute,
 }
