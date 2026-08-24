@@ -10,17 +10,12 @@ import {
   registerProductImportCandidate,
 } from "@/lib/product/import/product-import-candidate.functions";
 import type { ProductImportCandidate } from "@/lib/product/import/build-candidate";
-import { isProductImportAdminEmail } from "@/lib/product/import/product-import-auth";
 
 export const Route = createFileRoute("/admin/product-import")({
   head: () => ({ meta: [{ title: "商品登録候補 — Project Garage" }] }),
   beforeLoad: ({ context }) => {
     if (!context.user) {
       throw redirect({ to: "/login" });
-    }
-
-    if (!isProductImportAdminEmail(context.user.email)) {
-      throw redirect({ to: "/" });
     }
   },
   component: AdminProductImportPage,
@@ -50,7 +45,6 @@ function AdminProductImportPage() {
     setLoading(true);
     setErrorMsg(null);
     setRegisteredProductId(null);
-
     try {
       const result = await fetchCandidateFn({ data: { url: url.trim(), useAi: true } });
       setCandidate(result);
@@ -67,7 +61,6 @@ function AdminProductImportPage() {
     setRefreshingImages(true);
     setErrorMsg(null);
     setImageRefreshResult(null);
-
     try {
       const result = await refreshImagesFn({ data: {} });
       setImageRefreshResult(result);
@@ -80,18 +73,13 @@ function AdminProductImportPage() {
   };
 
   const handleRegister = async () => {
-    if (!candidate) {
-      return;
-    }
-
+    if (!candidate) return;
     if (!candidate.name || !candidate.brand || !candidate.priceMinYen || !candidate.priceMaxYen) {
       setErrorMsg("name / brand / price が不足しているため登録できません。");
       return;
     }
-
     setRegistering(true);
     setErrorMsg(null);
-
     try {
       const result = await registerCandidateFn({
         data: {
@@ -222,9 +210,7 @@ function AdminProductImportPage() {
 
             {candidate.warnings.length > 0 ? (
               <ul className="list-disc space-y-1 pl-5 text-xs text-amber-700 dark:text-amber-300">
-                {candidate.warnings.map((warning) => (
-                  <li key={warning}>{warning}</li>
-                ))}
+                {candidate.warnings.map((warning) => <li key={warning}>{warning}</li>)}
               </ul>
             ) : null}
 
@@ -235,11 +221,7 @@ function AdminProductImportPage() {
                 onChange={(event) => setCategory(event.target.value)}
                 className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm"
               >
-                {PRODUCT_CATEGORIES.map((entry) => (
-                  <option key={entry} value={entry}>
-                    {entry}
-                  </option>
-                ))}
+                {PRODUCT_CATEGORIES.map((entry) => <option key={entry} value={entry}>{entry}</option>)}
               </select>
             </div>
 
