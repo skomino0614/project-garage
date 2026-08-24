@@ -7,17 +7,12 @@ import {
   getAdminProducts,
   type AdminProductSummary,
 } from "@/lib/product/admin-product-compatibility.functions";
-import { isProductImportAdminEmail } from "@/lib/product/import/product-import-auth";
 
 export const Route = createFileRoute("/admin/products")({
   head: () => ({ meta: [{ title: "登録済み商品 — Project Garage" }] }),
   beforeLoad: ({ context }) => {
     if (!context.user) {
       throw redirect({ to: "/login" });
-    }
-
-    if (!isProductImportAdminEmail(context.user.email)) {
-      throw redirect({ to: "/" });
     }
   },
   component: AdminProductsPage,
