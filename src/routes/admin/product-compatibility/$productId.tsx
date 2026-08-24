@@ -7,7 +7,6 @@ import {
   getAdminProductCompatibility,
   saveAdminProductCompatibility,
 } from "@/lib/product/admin-product-compatibility.functions";
-import { isProductImportAdminEmail } from "@/lib/product/import/product-import-auth";
 
 type Compatibility = {
   id: string;
@@ -21,12 +20,11 @@ type Compatibility = {
 export const Route = createFileRoute("/admin/product-compatibility/$productId")({
   head: () => ({ meta: [{ title: "適合車種登録 — Project Garage" }] }),
   beforeLoad: ({ context }) => {
+    // UI navigation should only require an authenticated session here.
+    // The server functions below enforce PRODUCT_IMPORT_ADMIN_EMAILS, so
+    // server-side authorization remains the security boundary.
     if (!context.user) {
       throw redirect({ to: "/login" });
-    }
-
-    if (!isProductImportAdminEmail(context.user.email)) {
-      throw redirect({ to: "/" });
     }
   },
   component: AdminProductCompatibilityPage,
@@ -131,39 +129,19 @@ function AdminProductCompatibilityPage() {
               <div className="mt-6 grid gap-4 sm:grid-cols-2">
                 <label className="space-y-1 text-sm">
                   <span className="font-medium">メーカー</span>
-                  <input
-                    value={maker}
-                    onChange={(event) => setMaker(event.target.value)}
-                    className="w-full rounded-xl border border-border bg-background px-3 py-2"
-                  />
+                  <input value={maker} onChange={(event) => setMaker(event.target.value)} className="w-full rounded-xl border border-border bg-background px-3 py-2" />
                 </label>
-
                 <label className="space-y-1 text-sm">
                   <span className="font-medium">車種</span>
-                  <input
-                    value={model}
-                    onChange={(event) => setModel(event.target.value)}
-                    className="w-full rounded-xl border border-border bg-background px-3 py-2"
-                  />
+                  <input value={model} onChange={(event) => setModel(event.target.value)} className="w-full rounded-xl border border-border bg-background px-3 py-2" />
                 </label>
-
                 <label className="space-y-1 text-sm">
                   <span className="font-medium">シリーズ</span>
-                  <input
-                    value={series}
-                    onChange={(event) => setSeries(event.target.value)}
-                    placeholder="例：90 Series"
-                    className="w-full rounded-xl border border-border bg-background px-3 py-2"
-                  />
+                  <input value={series} onChange={(event) => setSeries(event.target.value)} placeholder="例：90 Series" className="w-full rounded-xl border border-border bg-background px-3 py-2" />
                 </label>
-
                 <label className="space-y-1 text-sm">
                   <span className="font-medium">適合種別</span>
-                  <select
-                    value={fitmentType}
-                    onChange={(event) => setFitmentType(event.target.value as "reference" | "confirmed")}
-                    className="w-full rounded-xl border border-border bg-background px-3 py-2"
-                  >
+                  <select value={fitmentType} onChange={(event) => setFitmentType(event.target.value as "reference" | "confirmed")} className="w-full rounded-xl border border-border bg-background px-3 py-2">
                     <option value="reference">参考適合</option>
                     <option value="confirmed">確定適合</option>
                   </select>
@@ -172,21 +150,10 @@ function AdminProductCompatibilityPage() {
 
               <label className="mt-4 block space-y-1 text-sm">
                 <span className="font-medium">適合メモ</span>
-                <textarea
-                  value={note}
-                  onChange={(event) => setNote(event.target.value)}
-                  rows={6}
-                  placeholder="例：2WD（MZRA90W / ZWR90W）。18×7.5J、5H-114.3、インセット+45。"
-                  className="w-full rounded-xl border border-border bg-background px-3 py-2"
-                />
+                <textarea value={note} onChange={(event) => setNote(event.target.value)} rows={6} placeholder="例：2WD（MZRA90W / ZWR90W）。18×7.5J、5H-114.3、インセット+45。" className="w-full rounded-xl border border-border bg-background px-3 py-2" />
               </label>
 
-              <button
-                type="button"
-                onClick={handleSave}
-                disabled={saving || !maker.trim() || !model.trim()}
-                className="mt-4 rounded-xl bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground disabled:opacity-50"
-              >
+              <button type="button" onClick={handleSave} disabled={saving || !maker.trim() || !model.trim()} className="mt-4 rounded-xl bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground disabled:opacity-50">
                 {saving ? "登録中…" : "適合情報を登録"}
               </button>
             </section>
@@ -200,19 +167,12 @@ function AdminProductCompatibilityPage() {
                   {compatibilities.map((compatibility) => (
                     <article key={compatibility.id} className="rounded-xl border border-border/70 p-4">
                       <div className="flex flex-wrap items-center gap-2 text-sm">
-                        <strong>
-                          {compatibility.maker} {compatibility.model}
-                          {compatibility.series ? ` / ${compatibility.series}` : ""}
-                        </strong>
+                        <strong>{compatibility.maker} {compatibility.model}{compatibility.series ? ` / ${compatibility.series}` : ""}</strong>
                         <span className="rounded-full border border-border px-2 py-0.5 text-xs">
                           {compatibility.fitmentType === "confirmed" ? "確定適合" : compatibility.fitmentType === "reference" ? "参考適合" : "未分類"}
                         </span>
                       </div>
-                      {compatibility.note ? (
-                        <p className="mt-2 whitespace-pre-wrap text-xs leading-relaxed text-muted-foreground">
-                          {compatibility.note}
-                        </p>
-                      ) : null}
+                      {compatibility.note ? <p className="mt-2 whitespace-pre-wrap text-xs leading-relaxed text-muted-foreground">{compatibility.note}</p> : null}
                     </article>
                   ))}
                 </div>
